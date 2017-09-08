@@ -20,6 +20,7 @@
 \DeclareMathOperator{\cst}{cst}
 \DeclareMathOperator{\Gram}{Gram}
 \DeclareMathOperator{\R}{\mathbb{R}}
+\DeclareMathOperator{\1}{\mathbb{1}}
 \DeclareMathOperator{\E}{\mathbf{E}}
 \DeclareMathOperator{\Y}{\mathcal{Y}}
 \DeclareMathOperator*{\argmax}{arg\,max}
@@ -72,6 +73,7 @@ For each couple data point - label, we get features as a vector of dimension d.
 
 \paragraph{Linear Assumption.}
 The logarithm of our probability can be written as linear function of these features, up to a normalization constant.
+The weights vector w has the same dimension as the features.
 \begin{equation}
 	p(y | x ; w) := \frac{\exp(w^TF(x, y))}{\sum_{y' \in \mathcal{Y}} \exp(w^TF(x, y'))}
 \end{equation}
@@ -106,41 +108,71 @@ Only the plan $z=1$ is plotted. In the full 3d space, the decision areas are con
 
 
  \subsection{Maximum Likelihood}
- 
- The multinomial logistic regression is an optimization problem that we write to fit the model to the training data.
- It is the maximum likelihood estimator of the parameter W, regularized with the $l^2$ loss.
- We note $\lambda$ the regularization parameter, and $\mathscr{P}$ the primal function to optimize. 
- 
- \begin{equation}
- 	\min_{W \in \mathbb{R}^{K*d}} \mathscr{P}(W) = \frac{\lambda}{2}\sum_{y=1}^K  \|w_y\|_2^2 - \frac{1}{n} \sum_{i=1}^n \log p(y_i|x_i;W)
- \end{equation}
- 
-We further abbreviate $\|W\|^2 = \sum_{y=1}^K  \|w_y\|_2^2\|$ considering the Frobenius norm of $W$.
-We also expand the expression of the conditional probability to get the classical formulation of the logistic regression problem.
-We note $\Tr(Z)$ the trace of the matrix Z.
 
+We want to fit our linear model to the observed samples $(x_i, y_i)$.
+This means minimizing an empirical loss:
+\begin{equation}
+	\min_w \sum_{y=1}^K \mathcal L (h_w(x_i),y_i)
+\end{equation}
+where $\mathcal L: \mathcal Y \times \mathcal Y \rightarrow \R_+$ is a loss between labels.
+A typical example is the 0-1 loss $\mathcal L(y, y') : = \1_{y=y'}$.
+Unfortunately, this problem is very hard.
+Since the loss is defined on a discrete space, there is no notion of continuity, even less so differentiability.
+We are left with exhaustive search approaches which are intractable.
+Hence the choice to consider the distribution probability $p( . | x ; w) \in \Delta_K$, where $\Delta_K$ denotes the simplex of dimension K.
+We replace the discrete space $\mathcal Y$ by the continuous space $\Delta_K$.
+We can define continuous or differentiable functions over this space, and get a tractable optimization problem.
+ 
+We want our model to give the maximum probability to the observed pairs $(x_i, y_i)$.
+The weights vector maximizing this probability is called maximum likelihood estimator.
+Using the independence of the samples, and going to the log space, we formulate this as a sum of negative log-likelihood minimization problem.
+To avoid overfitting, we regularize the problem by penalizing the $l^2$ norm of the weights.
+We note $\lambda$ the regularization parameter. The primal objective to minimize is:
+\begin{equation*}
+\mathscr P(w) = \frac{\lambda}{2}\|w\|^2 - \frac{1}{n}   \sum_{i=1}^{n} \log(p(y_i|x_i; w))	
+\end{equation*}
+Using the linear assumption, we expand the log-likelihood:
+\begin{equation*}
+	\min_{w\in\R^d} \frac{\lambda}{2}\|w\|^2 + \frac{1}{n}   \sum_{i=1}^{n}  \log \big (\sum_y e^{w^TF(x_i, y)} \big ) - w^TF(x_i, y_i)	
+\end{equation*}
+To write this in a more compact way, we define the corrected features $\psi_i(y)$ of a class y for the point i as the difference between the ground truth features and the features of $(x_i, y)$.
+\begin{equation*}
+	\psi_i(y)) := F(x_i, y_i) - F(x_i, y)
+\end{equation*}
+We can then remove the linear term from the objective:
+\begin{equation*}
+	\min_{w\in\R^d} \frac{\lambda}{2}\|w\|^2 + \frac{1}{n}   \sum_{i=1}^{n}  \log \big (\sum_y e^{- w^T\psi_i(y)} \big )
+\end{equation*}
+We can write this problem in a more vectorial form.
+Denote the log-partition function (the log-sum-exp) $\phi(z) = \log \big(\sum_{y=1}^K \exp(z_y)\big)$. 
+Denote $A_i$ the $d \times |\Y|$ matrix whose columns are the $\psi_i(y)$ for $y \in \Y$.
+From now on we will refer to the following formulation as \textit{primal problem}.
 \begin{equation}
 	\label{primal}
-	\min_{W \in \mathbb{R}^{K*d}} \frac{\lambda}{2}\|W\|^2 + \frac{1}{n} \sum_{i=1}^n \log \bigg(\sum_y \exp(w_y^Tx_i)\bigg) - w_{y_i}^Tx_i 
+	\min_{w\in\R^d}  \frac{\lambda}{2}\|w\|^2 + \frac{1}{n}   \sum_{i=1}^{n} \phi_i(-A_i^Tw)
 \end{equation} 
 
-We can write this problem in a more vectorial form by noting the log-partition function (the log-sum-exp) $\phi(z) = \log \big(\sum_{y=1}^K \exp(z_y)\big)$, and by introducing binary encoding of the ground truth Y. 
-
-\begin{equation}
-	\label{primal}
-	\min_{W \in \mathbb{R}^{K*d}} \frac{\lambda}{2}\|W\|^2 + \frac{1}{n} \sum_{i=1}^n \phi(Wx_i) - \frac{1}{n}\Tr(Y W X^T) 
-\end{equation} 
-
-This is a convex problem in W.
-Indeed the log-sum-exp is a convex function, as can be seen by verifying that it's Hessian is a semi-definite positive matrix.
+\paragraph{Convexity.}
+Let's convince ourselves that this is a convex problem in w.
+The $l^2$ penalty is of course convex.
+The log-sum-exp is a convex function.
+One can verify that it's Hessian is a semi-definite positive matrix -- it is also $1/2$-smooth.
+We apply this convex function to a linear transformation over w.
+Hence the convexity.
 The $l^2$ regularization guarantees that the function we are optimizing is at least $\lambda$ strongly convex. 
 
-Let's notice that the gradient of the log-partition function evaluated in $Wx$ is the conditional probability vector of the classes given x : $\nabla\phi(Wx) = (p(y|x;W))_{y\in {1,..,K}}$.
+
+Let's notice that the gradient of the log-partition function evaluated in $-A_i^Tw$ is the conditional probability vector of the classes given x, as defined by the softmax function.
+\begin{equation}
+	\nabla \phi(-A_i^Tw) = (p(y | x ; w))_{y \in \Y}
+\end{equation}
+The gradient of the right hand term with respect to w is the expectation of the corrected features according to these probabilities.
+\begin{equation}
+	\nabla_w (\phi(-A_i^Tw)) = \E_{y \sim p(. | x ; w)} [\psi_i(y)]
+\end{equation}
 This will prove useful in the following.
 
-For each i, we note $A_i$ the design matrix of size $d \times K$ whose columns are the $\psi_i(y)$.
-We note Y the label matrix of size n*K whose line $Y_i$ is the one-hot encoding of the label $y_i$.
- 
+
 
 \subsection{Dual Formulation}
 
