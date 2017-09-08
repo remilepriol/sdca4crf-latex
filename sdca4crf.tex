@@ -58,31 +58,53 @@ We adapt the algorithm to the structure of the output by considering the margina
 \subsection{Linear Models}
 
 We consider the following classical supervised setting.
-We observe vector data $x_i$ in dimension d, associated to labels $y_i\in {1,..,K}$, for $i \in {1,..,n}$.
-We note $X$ the design matrix of size n*d whose lines are the $x_i$.
-We note Y the label matrix of size n*K whose line $Y_i$ is the one-hot encoding of the label $y_i$.
-Given a new vector $x$, we want to predict what is the corresponding label $y$, or even better, a probability distribution over the classes ${1,..,K}$. 
+We observe n data points $x_i \in \mathcal{X}$, with their labels $y_i\in \mathcal{Y}:={1,..,K}$, for $i \in {1,..,n}$.
+We assume that the pairs $(x_i, y_i)$ are sampled independently and are identically distributed (i.i.d hypothesis).
+Given a new vector $x$, we want to predict what is the corresponding label $y$. 
+To do so, we first estimate a probability distribution over the classes $p(y|x ; w)$.
+$w$ are the \textbf{w}eights that parametrize this distribution. 
+The predicted label is then defined as the mode of this distribution : $\hat y = h_w(x) := \argmax_y p(y| x ; w)$.
 
-The simpler models are linear classifiers : the probability for each class $y$ is proportional to $\exp(w_y^Tx)$, where the vectors $w_y$ are the parameters of the model.
-In other word, we have one predictor per class, whose parameter is $w_y$.
-The trick is that we will train these predictors jointly. 
-We write $W$ the weight matrix whose lines are the $w_y$.
-The closed formula for the conditional probability of y given x is thus :
+\paragraph{Features.}
+We have no assumption on the space $\mathcal{X}$ but we assume a feature extractor $F:\mathcal{X}\times \mathcal{Y} \rightarrow \R^d$.
+These features can be either pre-trained or handcrafted.
+For each couple data point - label, we get features as a vector of dimension d.
+
+\paragraph{Linear Assumption.}
+The logarithm of our probability can be written as linear function of these features, up to a normalization constant.
 \begin{equation}
-	p(y|x;W) = \frac{\exp(w_y^Tx)}{\sum_{y=1}^K \exp(w_y^Tx)}
+	p(y | x ; w) := \frac{\exp(w^TF(x, y))}{\sum_{y' \in \mathcal{Y}} \exp(w^TF(x, y'))}
 \end{equation}
-With such models, we get polygonal classification boundaries, as shown in figure \ref{linear classification}.
 
-For the sake of comparison, this is the same model as a neural network with no hidden layer, the input layer of size d, the output layer of size K, a weight matrix W of size K*d, and an exponential non-linearity.
+In the simpler setting, when there is few classes ($K \leq \sim 10^3$), the features we use are a block encoding of the class.
+If x are vectors of dimension $d'$, we set $d=Kd'$. $F(x, y=k)$ then has a copy of x on its $k$-th block of size $d'$, and zeros everywhere else.
+In terms of linear model, this is the same as having one weights vector $w_k$ per class.
+For the sake of comparison, this is like a shallow neural network with no hidden layer.
+The input layer is of size $d'$.
+The output layer of size K.
+The weight matrix W of size $K \times d'$ is the vertical concatenation of the $w_k$.
+We apply a softmax on the output layer.
+
+It should be noted that in general $d'$ includes a bias dimension.
+The last coordinate of each x is set to 1 (or another constant).
+The effective dimension where the x lives is $d'-1$.
+With such models, we get polygonal classification boundaries in the space $\mathcal X = \R^{d'}$.
+This is shown in figure \ref{linear classification} for $d'=3$.
+Only the plan $z=1$ is plotted. In the full 3d space, the decision areas are conic shapes centred on the origin.
 
 \begin{figure}[ht]
 	\label{linear classification}
 	\includegraphics[width=\textwidth]{images/linear_classification.pdf}
-	\caption{Optimal decision areas for the multinomial logistic regression.}
+	\caption{
+	Optimal decision areas for the multinomial logistic regression.
+	The data points are drawn from a balanced gaussian mixture in dimension 2.
+	We set the bias constant to 1.
+	Areas are coloured by the prediction given by a linear model fitted on these points. 
+	}
 \end{figure}
 
 
- 
+
  \subsection{Maximum Likelihood}
  
  The multinomial logistic regression is an optimization problem that we write to fit the model to the training data.
@@ -115,6 +137,10 @@ The $l^2$ regularization guarantees that the function we are optimizing is at le
 
 Let's notice that the gradient of the log-partition function evaluated in $Wx$ is the conditional probability vector of the classes given x : $\nabla\phi(Wx) = (p(y|x;W))_{y\in {1,..,K}}$.
 This will prove useful in the following.
+
+For each i, we note $A_i$ the design matrix of size $d \times K$ whose columns are the $\psi_i(y)$.
+We note Y the label matrix of size n*K whose line $Y_i$ is the one-hot encoding of the label $y_i$.
+ 
 
 \subsection{Dual Formulation}
 
