@@ -35,12 +35,23 @@
 
 \section*{Introduction}
 
-We apply the Stochastic Dual Coordinate Ascent (SDCA) algorithm to two machine learning optimization problems.
-First we consider the multinomial logistic regression to classify an input x among K classes, where K is small.
-Second, we extend the algorithm to Conditional Random Fields (CRF).
-This structured prediction problem builds a map from an input x to a structured output y which lives in a space that is finite but that is exponentially big in the size of x.
-The raw application of SDCA is numerically intractable.
-We adapt the algorithm to the structure of the output by considering the marginals instead of the joint probability thus leading to an efficient algorithm.
+We apply the Stochastic Dual Coordinate Ascent (SDCA) algorithm to multi-class classification problems.
+These problems are formulated as $l^2$ regularized negative log-likelihood minimization. 
+We consider their dual : an entropy regularized centroid mean square error.
+SDCA update one (block) coordinate at a time in the dual to raise the dual score.
+  
+First we focus on problems with a small number of classes for which SDCA's application is straight forward.
+This is the framework of multinomial logistic regression.
+Then we elaborate the theory for structured prediction problems.
+In structured prediction, each class or label is a structured object.
+There are too many of these objects to count them all.
+More precisely we want to build a map from an input $x$ to a structured output $y$.
+$y$ lives in a space that is finite but that is exponentially big in the size of $x$.
+However we can use the structure over these $y$ to make the problem tractable.
+
+In Conditional Random Fields (CRF), the labels distribution conditioned on the input is Markov with respect to an undirected graphical model (mathematician language) / Markov random field (computer scientist language). 
+The dual problem's natural variables are the joint probabilities over all the potential labels.
+We adapt the algorithm to the structure of the output by considering the marginals with respect to the cliques of that graph.
 
 \section{Multiclass Logistic Regression}
 
