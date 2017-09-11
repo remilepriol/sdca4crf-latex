@@ -12,6 +12,7 @@
 \usepackage{amssymb}
 \usepackage{bbold}
 \usepackage{mathrsfs}
+\usepackage{bm}
 
 \usepackage{algorithm}
 \usepackage[noend]{algorithmic} 
@@ -25,6 +26,7 @@
 \DeclareMathOperator{\Y}{\mathcal{Y}}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator{\dom}{Dom}
 
 \title{Stochastic Dual Coordinate Ascent \\ for \\ Conditional Random Fields}
 \author{R\'emi LE PRIOL}
@@ -75,6 +77,7 @@ For each couple data point - label, we get features as a vector of dimension d.
 The logarithm of our probability can be written as linear function of these features, up to a normalization constant.
 The weights vector w has the same dimension as the features.
 \begin{equation}
+	\label{primal probability}
 	p(y | x ; w) := \frac{\exp(w^TF(x, y))}{\sum_{y' \in \mathcal{Y}} \exp(w^TF(x, y'))}
 \end{equation}
 
@@ -177,52 +180,96 @@ This will prove useful in the following.
 \subsection{Dual Formulation}
 
 As any convex problem, the logistic regression admits dual formulations.
-In this case, as the problem is unconstrained, these duals are called Fenchel duals.
-We are given a splitting of the initial function to optimize in the form $f(x) + g(Ax)$ with x a vector, A a matrix, f and g two convex functions.
-We note $f^*$ and $g^*$ the Fenchel duals of $f$ and $g$ respectively.
-For simplicity, we do not write down the definition domains of these functions.
+In this case, as the problem is unconstrained, we use Fenchel duality theorem to get a dual formulation.
+
+\subsubsection{Derivation}
+
+We write $g(w) :=  \frac{\lambda}{2}\|w\|^2$ the convex regularization function. The primal problem becomes:
+\begin{equation*}
+	\min_{w \in \R^d}  g(w) + \frac{1}{n} \sum_{i=1}^n \phi_i(- A_i^T w)
+\end{equation*}
+We note $g^*$ and $\phi_i^*$ the convex conjugates (aka Fenchel dual functions) of $g$ and $\phi_i$ respectively.
 The Fenchel dual associated to this problem is derived as follows :
 \begin{align*}
-	 \min_x \ f(x) + g(Ax) & = \min_x \ \max_z z^Tx - f^*(z) + \max_y y^T A x - g*(y) \\
-	 	& \geq \max_{z, y} \  \min_x x^T(z + A^T y) - f*(z) - g*(y) \\
-		& =  - \min_y \   f^*(-A^Ty) + g^*(y) \quad \textrm{if} \quad z=-A^T y \quad , -\infty \textrm{ otherwise.}\\
+	 \min_w \ f(w) + \frac{1}{n} \sum_i \phi_i(- A_i^T w) & = \min_w \ \max_{z\in \dom g^*} z^Tw - g^*(z) + \frac{1}{n} \sum_i \max_{\alpha_i \in \dom \phi_i^*} \alpha_i^T (-A_i^T w) - \phi_i^*(\alpha_i) \\
+	 	& \geq \max_{z, \bm \alpha} \  \min_w w^T(z - \frac{1}{n} \sum_i A_i \alpha_i) - g^*(z) - \frac{1}{n} \sum_i \phi_i^*(\alpha_i) \\
+		& =  \max_{\bm \alpha} \   - g^*(\frac{1}{n} \sum_i A_i \alpha_i) + \frac{1}{n} \sum_i -\phi_i^*(\alpha_i) \quad \textrm{if} \quad z= \frac{1}{n} \sum_i A_i^T \alpha_i \quad , -\infty \textrm{ otherwise.}\\
 \end{align*}
+When $g$ is the $l^2$ regularization, the convex conjugate is $g^*: z \mapsto \frac{1}{2\lambda}\|z\|^2$, with domain $\R^d$.
+The convex conjugate of the log-sum-exp is the negative entropy. 
+Its domain is $\Delta_{|\Y|}$ the simplex of dimension $|\Y|$.
+\begin{equation}
+	-\phi_i^*(\alpha_i) = H_i(\alpha_i) := - \sum_{y \in \Y} \alpha_i(y) \log(\alpha_i(y))
+\end{equation}
+Finally we get the canonical dual formulation for the maximum likelihood:
+\begin{equation}
+	\max_{\bm \alpha | \forall i, \alpha_i \in \Delta_{|\Y|}} \mathscr{D}(\bm \alpha) = -\frac{1}{2\lambda} \| \frac{1}{n} \sum_i A_i^T \alpha_i \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
+\end{equation}
+$\bm \alpha$ is a n*K matrix whose lines live in the simplex.
+$\alpha$ should be interpreted as a probability density on the labels for each data point.
 
-Importantly enough, each splitting of the function in arbitrary pairs of convex functions can yield a different dual formulation.
-For the logistic regression, rather than splitting the function in this canonical form, we get the dual formulation by injecting the equation $f(x) = \max_y x^T y - f^*(y)$ for the $l^2$ regularization and each of the log-sum-exp.
-We then get the canonical dual problem : \todo{Should I derive the dual formulation here?}
-\begin{equation}
-	\max_{\alpha\in \Delta_K^n} \mathscr{D}(\alpha) = -\frac{\lambda}{2} \|W(\alpha)\|^2 + \frac{1}{n} \sum_{i=1}^n H(\alpha_i)
-\end{equation}
-where $\Delta_K$ is the simplex of dimension K, meaning that $\alpha$ is a n*K matrix whose lines live in the simplex.
-H is the entropy of dimension K : $H(\alpha_i) := - \sum_y \alpha_i(y) \log(\alpha_i(y)$.
-$\alpha$ should be interpreted as a distribution of weight on the different classes for each example.
-What we call the primal parameters associated to alpha is defined by the equation :
-\begin{equation}
-	w_y(\alpha) := \frac{1}{\lambda n} \sum_i (\mathbb{1}_{y=y_i} - \alpha_i(y)) x_i 
-\end{equation}
-We can also write it with matrices : 
-\begin{equation}
-	\label{primal to dual}
-	W(\alpha) = \frac{1}{\lambda n} (Y - \alpha)^T X 
-\end{equation}
-Or we can separate the influence of each example i through $\alpha_i$ on the resulting vector W :
-\begin{equation}
-	\label{individual w}
-	W(\alpha) = \frac{1}{n} \sum_i W_i(\alpha_i) \quad \textrm{where} \quad W_i(\alpha_i) := \frac{1}{\lambda} (Y_i - \alpha_i) x_i^T
-\end{equation}
+\subsubsection{Optimality Condition}
+For this problem, \textbf{strong duality holds}.
+\begin{verbatim}
+https://en.wikipedia.org/wiki/Fenchel%27s_duality_theorem
+\end{verbatim} 
+\todo { What are the conditions for this. 
+In wikipedia, they only talk about the two functions situation.
+How is the proof?}
 
-This equation correspond to an optimality condition that appears when one derives the dual formulation.
-Similarly, when we derive the primal problem from the dual problem, we get the optimality condition :
+We look at the global optimums $(w^*,z^*,\bm\alpha^*)$.
+$(w^*,z^*)$ should be dual variables for the convex conjugates $(g,g^*)$.
+\begin{equation*}
+	g(w^*) + g^*(z^*) - \langle w^*, z^* \rangle = \frac{\lambda}{2} \| w^* - \frac{1}{\lambda} z^* \|^2 = 0
+\end{equation*}
+Hence the optimality condition:
+\begin{equation*}
+	w^* = 	\frac{1}{\lambda} z^* =  \frac{1}{\lambda n} \sum_i A_i^T \alpha_i^*
+\end{equation*}
+Consequently, we define the dual weights, or primal parameter associated to $\bm \alpha$, with the equation :
 \begin{equation}
 	\label{dual to primal}
-	\alpha_i(W) = \nabla\phi(Wx_i) = p(y_i|x_i;W)
+	w(\bm \alpha) =   \frac{1}{\lambda n} \sum_i A_i^T \alpha_i
 \end{equation}
-This optimality condition means that at the optimum, the dual problem and the primal problem give the same distribution on the classes of each instance i.
+The dual problem becomes:
+\begin{equation}
+	\label{dual problem}
+	\max_{\bm \alpha | \forall i, \alpha_i \in \Delta_{|\Y|}} -\frac{\lambda}{2} \| w(\bm \alpha) \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
+\end{equation}
 
-As the primal problem is unconstrained, strong duality holds for this problem.
-Thus the optimum points $W^*$ and $\alpha^*$ verify equality in both equations \ref{primal to dual} and \ref{dual to primal}.
-See  \verb https://en.wikipedia.org/wiki/Fenchel%27s_duality_theorem \verb  for real conditions.
+Formula \ref{dual to primal} can be written in a number of ways, each time outlining some property.
+We write A the horizontal concatenation of the $A_i$.
+It is a matrix of size $d \times n|\Y|$.
+\begin{align}
+	w(\bm \alpha) & = \frac{1}{\lambda n} A \alpha \label{linearity} \\
+	 & = \frac{1}{\lambda} \E_{i} [ \E_{y \sim \alpha_i} [\psi_i(y)]] \label{corrected features centroid} \\
+	 & =   \frac{1}{\lambda} \E_{i} [F(x_i, y_i)] - \frac{1}{\lambda} \E_{i} [ \E_{y \sim \alpha_i} [F(x_i, y)]]
+	 \label{centroid difference}
+\end{align}
+The expectations over i assume that i is a uniform random variable taking its values between 1 and n. 
+Equation \ref{linearity} highlights the linearity in $\bm \alpha$. Equation \ref{corrected features centroid} shows that this the centroid of the corrected features. Equation \ref{centroid difference} shows that this is the difference between the empirical feature centroid, and the centroids defined by $\bm \alpha$.
+
+We can also derive the primal problem from the dual problem.
+We then get another optimality condition $\bm \alpha(w^*) = \bm \alpha^*$ where $\alpha(w)$ is the probability density on the training set defined by the weights w (equation \ref{primal probability}).
+\begin{equation}
+	\label{primal to dual}
+	\forall i, \alpha_i(w) = \nabla\phi_i(-A_i^Tw) = p(.|x; w) \propto \exp(-w^T \psi_i(.))
+\end{equation}
+
+\subsubsection{Interpretation}
+The primal problem is a regularized maximization of the likelihood of w. 
+In the dual problem \ref{dual problem}, we control directly the probabilities given to each class on the training samples.
+There are two conflicting terms.
+The left hand one is the opposite of the squared distance between the centroid of the ground truth features and the centroids predicted by the dual model. It is maximal for the empirical distribution.
+The second term aims at maximizing the entropy of this distribution.
+It pushes the $\alpha_i$ towards a more uniform distribution.
+Thus the role of the terms is inverted compared to the primal problem : the data fitting term is the squared euclidean distance, and the regularization is the entropy.
+
+\paragraph{Naming :} 
+We call \textit{primal model}, the one where we are given \textit{primal weights} $w$, from which we deduce \textit{primal probabilities} $\alpha_i(w)$.
+We call \textit{dual model}, the one where we are given \textit{dual probabilities} $\alpha_i$, from which we deduce \textit{dual weights} $w(\alpha)$ as the centroid of the corrected feature vectors.
+The optimality conditions tell us that at the optimum, these two models are equal.
+They weights are the centroid of the corrected features, and the dual probabilities are given by the softmax function.
 
 
 \subsection{Stochastic Dual Coordinate Ascent}
@@ -351,7 +398,6 @@ Formally, for any pair (input, output) we want to define a structured score $s_w
 This score should represent the confidence that we have that the point x belongs to the class y through the equation $p(y|x ; w)\propto \exp(s_w(x, y))$.
 Physically, the score  is thus the opposite of the energy of the state y for the system x. 
 \begin{equation}
-	\label{primal probability}
 	p(y|x; w)=  \frac{e^{s_w(x, y)}}{\sum_{y'} e^{s_w(x, y')}}
 \end{equation}
 
