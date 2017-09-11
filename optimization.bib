@@ -12,11 +12,12 @@
 	file = {arXiv\:1611.02635 PDF:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/43KAQH7X/Wilson et al. - 2016 - A Lyapunov Analysis of Momentum Methods in Optimiz.pdf:application/pdf;arXiv.org Snapshot:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/P8J6C4RX/1611.html:text/html}
 }
 
-@book{kakade_duality_nodate,
+@book{kakade_duality_2009,
 	title = {On the duality of strong convexity and strong smoothness: {Learning} applications and matrix regularization},
 	shorttitle = {On the duality of strong convexity and strong smoothness},
 	abstract = {We show that a function is strongly convex with respect to some norm if and only if its conjugate function is strongly smooth with respect to the dual norm. This result has already been found to be a key component in deriving and analyzing several learning algorithms. Utilizing this duality, we isolate a single inequality which seamlessly implies both generalization bounds and online regret bounds; and we show how to construct strongly convex functions over matrices based on strongly convex functions over vectors. The newly constructed functions (over matrices) inherit the strong convexity properties of the underlying vector functions. We demonstrate the potential of this framework by analyzing several learning algorithms including group Lasso, kernel learning, and online control with adversarial quadratic costs. 1},
 	author = {Kakade, Sham M. and Shalev-shwartz, Shai and Tewari, Ambuj},
+	year = {2009},
 	file = {Citeseer - Full Text PDF:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/5BQ7977A/Kakade et al. - On the duality of strong convexity and strong smoo.pdf:application/pdf;Citeseer - Snapshot:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/83TMZT3P/summary.html:text/html}
 }
 
@@ -161,14 +162,14 @@
 	file = {Full Text PDF:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/KX8TF4HT/Osokin et al. - 2016 - Minding the Gaps for Block Frank-Wolfe Optimizatio.pdf:application/pdf;Snapshot:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/9ASHI44D/osokin16.html:text/html}
 }
 
-@article{schmidt_minimizing_2013,
+@article{schmidt_minimizing_2015,
 	title = {Minimizing {Finite} {Sums} with the {Stochastic} {Average} {Gradient}},
 	url = {http://arxiv.org/abs/1309.2388},
 	abstract = {We propose the stochastic average gradient (SAG) method for optimizing the sum of a finite number of smooth convex functions. Like stochastic gradient (SG) methods, the SAG method's iteration cost is independent of the number of terms in the sum. However, by incorporating a memory of previous gradient values the SAG method achieves a faster convergence rate than black-box SG methods. The convergence rate is improved from O(1/k{\textasciicircum}\{1/2\}) to O(1/k) in general, and when the sum is strongly-convex the convergence rate is improved from the sub-linear O(1/k) to a linear convergence rate of the form O(p{\textasciicircum}k) for p {\textbackslash}textless\{\} 1. Further, in many cases the convergence rate of the new method is also faster than black-box deterministic gradient methods, in terms of the number of gradient evaluations. Numerical experiments indicate that the new algorithm often dramatically outperforms existing SG and deterministic gradient methods, and that the performance may be further improved through the use of non-uniform sampling strategies.},
 	journal = {arXiv:1309.2388 [cs, math, stat]},
 	author = {Schmidt, Mark and Roux, Nicolas Le and Bach, Francis},
-	month = sep,
-	year = {2013},
+	month = jan,
+	year = {2015},
 	note = {arXiv: 1309.2388},
 	keywords = {Computer Science - Learning, Mathematics - Optimization and Control, Statistics - Computation, Statistics - Machine Learning},
 	file = {arXiv\:1309.2388 PDF:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/6TVFXQIB/Schmidt et al. - 2013 - Minimizing Finite Sums with the Stochastic Average.pdf:application/pdf;arXiv.org Snapshot:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/2XRIIHTV/1309.html:text/html}
@@ -185,4 +186,101 @@
 	year = {1992},
 	keywords = {C (Computer program language)},
 	file = {Numerical_Recipes.pdf:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/HUDG92EK/Numerical_Recipes.pdf:application/pdf}
+}
+
+@article{dziugaite_computing_2017,
+	title = {Computing {Nonvacuous} {Generalization} {Bounds} for {Deep} ({Stochastic}) {Neural} {Networks} with {Many} {More} {Parameters} than {Training} {Data}},
+	url = {http://arxiv.org/abs/1703.11008},
+	abstract = {One of the defining properties of deep learning is that models are chosen to have many more parameters than available training data. In light of this capacity for overfitting, it is remarkable that simple algorithms like SGD reliably return solutions with low test error. One roadblock to explaining these phenomena in terms of implicit regularization, structural properties of the solution, and/or easiness of the data is that many learning bounds are quantitatively vacuous in this "deep learning" regime. In order to explain generalization, we need nonvacuous bounds. We return to an idea by Langford and Caruana (2001), who used PAC-Bayes bounds to compute nonvacuous numerical bounds on generalization error for stochastic two-layer two-hidden-unit neural networks via a sensitivity analysis. By optimizing the PAC-Bayes bound directly, we are able to extend their approach and obtain nonvacuous generalization bounds for deep stochastic neural network classifiers with millions of parameters trained on only tens of thousands of examples. We connect our findings to recent and old work on flat minima and MDL-based explanations of generalization.},
+	journal = {arXiv:1703.11008 [cs]},
+	author = {Dziugaite, Gintare Karolina and Roy, Daniel M.},
+	month = mar,
+	year = {2017},
+	note = {arXiv: 1703.11008},
+	keywords = {Computer Science - Learning},
+	file = {arXiv\:1703.11008 PDF:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/28H3KVZP/Dziugaite and Roy - 2017 - Computing Nonvacuous Generalization Bounds for Dee.pdf:application/pdf;arXiv.org Snapshot:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/F74D7BV6/1703.html:text/html}
+}
+
+@article{collins_exponentiated_2008,
+	title = {Exponentiated {Gradient} {Algorithms} for {Conditional} {Random} {Fields} and {Max}-{Margin} {Markov} {Networks}},
+	volume = {9},
+	issn = {ISSN 1533-7928},
+	url = {http://www.jmlr.org/papers/v9/collins08a.html},
+	number = {Aug},
+	urldate = {2017-08-29},
+	journal = {Journal of Machine Learning Research},
+	author = {Collins, Michael and Globerson, Amir and Koo, Terry and Carreras, Xavier and Bartlett, Peter L.},
+	year = {2008},
+	pages = {1775--1822},
+	file = {Full Text PDF:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/H76TNE8P/Collins et al. - 2008 - Exponentiated Gradient Algorithms for Conditional .pdf:application/pdf;Snapshot:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/V5KERKS6/collins08a.html:text/html}
+}
+
+@inproceedings{zhao_stochastic_2015,
+	title = {Stochastic {Optimization} with {Importance} {Sampling} for {Regularized} {Loss} {Minimization}},
+	url = {http://proceedings.mlr.press/v37/zhaoa15.html},
+	abstract = {Uniform sampling of training data has been commonly used in traditional stochastic optimization algorithms such as Proximal Stochastic Mirror Descent (prox-SMD) and Proximal Stochastic Dual Coordin...},
+	language = {en},
+	urldate = {2017-08-29},
+	booktitle = {{PMLR}},
+	author = {Zhao, Peilin and Zhang, Tong},
+	month = jun,
+	year = {2015},
+	pages = {1--9},
+	file = {Full Text PDF:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/VX3T7AFQ/Zhao and Zhang - 2015 - Stochastic Optimization with Importance Sampling f.pdf:application/pdf;Snapshot:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/AD3CE44P/zhaoa15.html:text/html}
+}
+
+@article{schmidt_non-uniform_2015,
+	title = {Non-{Uniform} {Stochastic} {Average} {Gradient} {Method} for {Training} {Conditional} {Random} {Fields}},
+	url = {http://arxiv.org/abs/1504.04406},
+	abstract = {We apply stochastic average gradient (SAG) algorithms for training conditional random fields (CRFs). We describe a practical implementation that uses structure in the CRF gradient to reduce the memory requirement of this linearly-convergent stochastic gradient method, propose a non-uniform sampling scheme that substantially improves practical performance, and analyze the rate of convergence of the SAGA variant under non-uniform sampling. Our experimental results reveal that our method often significantly outperforms existing methods in terms of the training objective, and performs as well or better than optimally-tuned stochastic gradient methods in terms of test error.},
+	journal = {arXiv:1504.04406 [cs, math, stat]},
+	author = {Schmidt, Mark and Babanezhad, Reza and Ahmed, Mohamed Osama and Defazio, Aaron and Clifton, Ann and Sarkar, Anoop},
+	month = apr,
+	year = {2015},
+	note = {arXiv: 1504.04406},
+	keywords = {Computer Science - Learning, Mathematics - Optimization and Control, Statistics - Computation, Statistics - Machine Learning},
+	file = {arXiv\:1504.04406 PDF:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/KRKT8CQT/Schmidt et al. - 2015 - Non-Uniform Stochastic Average Gradient Method for.pdf:application/pdf;arXiv.org Snapshot:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/C8FNRWQB/1504.html:text/html}
+}
+
+@article{taskar_structured_2006,
+	title = {Structured {Prediction}, {Dual} {Extragradient} and {Bregman} {Projections}},
+	volume = {7},
+	issn = {ISSN 1533-7928},
+	url = {http://www.jmlr.org/papers/v7/taskar06a.html},
+	number = {Jul},
+	urldate = {2017-09-11},
+	journal = {Journal of Machine Learning Research},
+	author = {Taskar, Ben and Lacoste-Julien, Simon and Jordan, Michael I.},
+	year = {2006},
+	pages = {1627--1653},
+	file = {Full Text PDF:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/JRUDXTCX/Taskar et al. - 2006 - Structured Prediction, Dual Extragradient and Breg.pdf:application/pdf;Snapshot:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/7N2AX5T2/taskar06a.html:text/html}
+}
+
+@article{defazio_saga:_2014,
+	title = {{SAGA}: {A} {Fast} {Incremental} {Gradient} {Method} {With} {Support} for {Non}-{Strongly} {Convex} {Composite} {Objectives}},
+	shorttitle = {{SAGA}},
+	url = {http://arxiv.org/abs/1407.0202},
+	abstract = {In this work we introduce a new optimisation method called SAGA in the spirit of SAG, SDCA, MISO and SVRG, a set of recently proposed incremental gradient algorithms with fast linear convergence rates. SAGA improves on the theory behind SAG and SVRG, with better theoretical convergence rates, and has support for composite objectives where a proximal operator is used on the regulariser. Unlike SDCA, SAGA supports non-strongly convex problems directly, and is adaptive to any inherent strong convexity of the problem. We give experimental results showing the effectiveness of our method.},
+	journal = {arXiv:1407.0202 [cs, math, stat]},
+	author = {Defazio, Aaron and Bach, Francis and Lacoste-Julien, Simon},
+	month = jul,
+	year = {2014},
+	note = {arXiv: 1407.0202},
+	keywords = {Computer Science - Learning, Mathematics - Optimization and Control, Statistics - Machine Learning},
+	file = {arXiv\:1407.0202 PDF:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/GK4NWSXP/Defazio et al. - 2014 - SAGA A Fast Incremental Gradient Method With Supp.pdf:application/pdf;arXiv.org Snapshot:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/TFSNZH5P/1407.html:text/html}
+}
+
+@inproceedings{jaggi_revisiting_2013,
+	title = {Revisiting {Frank}-{Wolfe}: {Projection}-{Free} {Sparse} {Convex} {Optimization}},
+	shorttitle = {Revisiting {Frank}-{Wolfe}},
+	url = {http://proceedings.mlr.press/v28/jaggi13.html},
+	abstract = {We provide stronger and more general primal-dual convergence results for Frank-Wolfe-type algorithms (a.k.a. conditional gradient) for constrained convex optimization, enabled by a simple framework...},
+	language = {en},
+	urldate = {2017-09-11},
+	booktitle = {{PMLR}},
+	author = {Jaggi, Martin},
+	month = feb,
+	year = {2013},
+	pages = {427--435},
+	file = {Full Text PDF:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/3ZF746RM/Jaggi - 2013 - Revisiting Frank-Wolfe Projection-Free Sparse Con.pdf:application/pdf;Snapshot:/Users/remilepriol/Library/Application Support/Zotero/Profiles/fbxcz3st.default/zotero/storage/VRQGDUQX/jaggi13.html:text/html}
 }
