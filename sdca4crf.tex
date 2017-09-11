@@ -56,6 +56,8 @@ In Conditional Random Fields (CRF), the labels distribution conditioned on the i
 The dual problem's natural variables are the joint probabilities over all the potential labels.
 We adapt the algorithm to the structure of the output by considering the marginals with respect to the cliques of that graph.
 
+\tableofcontents
+
 \section{Multiclass Logistic Regression}
 
 \subsection{Linear Models}
@@ -151,7 +153,7 @@ Denote the log-partition function (the log-sum-exp) $\phi(z) = \log \big(\sum_{y
 Denote $A_i$ the $d \times |\Y|$ matrix whose columns are the $\psi_i(y)$ for $y \in \Y$.
 From now on we will refer to the following formulation as \textit{primal problem}.
 \begin{equation}
-	\label{primal}
+	\label{primal problem}
 	\min_{w\in\R^d}  \frac{\lambda}{2}\|w\|^2 + \frac{1}{n}   \sum_{i=1}^{n} \phi_i(-A_i^Tw)
 \end{equation} 
 
@@ -167,11 +169,12 @@ The $l^2$ regularization guarantees that the function we are optimizing is at le
 
 Let's notice that the gradient of the log-partition function evaluated in $-A_i^Tw$ is the conditional probability vector of the classes given x, as defined by the softmax function.
 \begin{equation}
-	\nabla \phi(-A_i^Tw) = (p(y | x ; w))_{y \in \Y}
+	\nabla \phi_i(-A_i^Tw) = (p(y | x ; w))_{y \in \Y}
 \end{equation}
 The gradient of the right hand term with respect to w is the expectation of the corrected features according to these probabilities.
 \begin{equation}
-	\nabla_w (\phi(-A_i^Tw)) = \E_{y \sim p(. | x ; w)} [\psi_i(y)]
+	\label{primal gradient}
+	\nabla_w (\phi_i(-A_i^Tw)) = \E_{y \sim p(. | x ; w)} [\psi_i(y)]
 \end{equation}
 This will prove useful in the following.
 
@@ -272,75 +275,46 @@ The optimality conditions tell us that at the optimum, these two models are equa
 They weights are the centroid of the corrected features, and the dual probabilities are given by the softmax function.
 
 
-\subsection{Duality Gap and Non-Uniform Sampling}
-As SDCA keeps track of both a dual variable $\alpha$ and a primal variable $W(\alpha)$, abbreviated $W$ in the following, we can evaluate the duality gap between the primal problem evaluated in $W$ and the dual problem evaluated in $\alpha$. 
-\begin{align*}
-	g(\alpha,W) & = \mathscr{P}(W) - \mathscr{D}(\alpha)\\
-	& = \lambda \|W\|^2 	+\frac{1}{n}\sum_{i=1}^n \big[ \phi(Wx_i) - H(\alpha_i)\big] - \frac{1}{n}\Tr(Y W X^T) \\
-	& = \frac{1}{n}\sum_{i=1}^n \big[ \lambda \langle W_i(\alpha_i),W\rangle + \phi(Wx_i) - H(\alpha_i) - Y_i^T W x_i\big] \quad \textrm{where} \quad W_i(\alpha_i) := \frac{1}{\lambda} (Y_i - \alpha_i) x_i^T \\
-	& = \frac{1}{n}\sum_{i=1}^n \big[ \Tr(x_i (Y_i-\alpha_i)^T W) + \phi(Wx_i) - Y_i W x_i - H(\alpha_i)\big]\\
-	& = \frac{1}{n}\sum_{i=1}^n \big[\phi(Wx_i) - H(\alpha_i) - \alpha_i^T W x_i\big]
-\end{align*}
-
-If we note $s_i=Wx_i$ the score given by our primal model to the different classes on the example i, the total duality gap can then be written as the mean of individual gaps : 
-\begin{equation}
-	g_i(\alpha_i,s_i) = \phi(s_i) - H(\alpha_i) - \langle\alpha_i, s_i\rangle
-\end{equation}
-$g_i$ is really a duality gap.
-The log-partition $\phi$ and the entropy $-H$ are convex conjugates.
-Consequently, $g_i$ is the Fenchel duality gap between $\phi(s_i)$ and $H(\alpha_i)$.
-It is always positive and  it represents the sub-optimality we have on the datapoint i.
-It can also be expressed as the Kullback-Leibler divergence between the dual distribution $\alpha_i$ and the primal distribution $\nabla_i := \nabla\phi(s_i) = \exp(s_i - \phi(s_i))$.
-Indeed $\langle\alpha_i, s_i\rangle$ becomes $\langle\alpha_i, \log(\nabla_i)\rangle + \phi(s_i)\langle\alpha_i, \mathbb{1}\rangle = \E_{\alpha_i}[log(\nabla_i)] + \phi(s_i)$
-\begin{equation}
-	g_i(\alpha_i,\nabla_i) = D_{KL}(\alpha_i || \nabla_i)
-\end{equation}
-
-In the article \cite{osokin_minding_2016}, the author apply a non-unform sampling scheme on the algorithm Block Coordinate Frank-Wolfe \cite{lacoste-julien_block-coordinate_2012}. 
-Their scheme is to sample proportionally to past-estimates of the individual duality gaps.
-In SDCA, we have access to duality gap $g_i$ if we pick the element i for almost no extra cost.
-Indeed each step involves computing $s_i = W x_i$ to get $\alpha_i(W(\alpha))=\nabla\phi(s_i)$.
-So we can get $\phi(s_i)$ in time $O(K)$.
-$H(\alpha_i)$ is already computed during the line search, and is done in $O(K)$ as well.
-Finally the scalar product $\langle\alpha_i, s_i\rangle$ has to be computed for a similar cost $O(K)$.  
-
+%%%%%%%%%%%%%
 \subsection{Duality Gaps}
 
 The duality gap $g(w,\alpha)$ is the difference between the value  of the primal problem evaluated in $w$, and the value of the dual problem evaluated in $\alpha$.
+\begin{equation*}
+	g(w,\bm \alpha) := \mathscr P(w) - \mathscr D(\bm \alpha)
+\end{equation*}
 It is interesting to look at the duality gap for both the primal model and the dual model, i.e. the duality gap between the primal weights and the primal probability, and the duality gap between the dual weights and the dual probability.
 
 \paragraph{Primal model:}
+We inject the expression of $\alpha_i(w)$ in the entropy to find the formula:
 \begin{equation}
-	g(w,\alpha(w)) = \frac{\lambda}{2} \|w-w(\alpha(w))\|^2
+	\label{primal duality gap}
+	g(w,\bm \alpha(w)) = \frac{\lambda}{2} \|w-w(\alpha(w))\|^2
 \end{equation}
-In this formula appears $w(\alpha(w))$, what the dual model created by the primal probabilities think the weights should be. 
-$w(\alpha(w))$ is actually proportional to the derivative of the partition function with respect to w :
+This formula involves $w(\alpha(w))$. This is what the dual model created by the primal probabilities think the weights should be. 
+$w(\alpha(w))$ is actually proportional to the derivative of the partition function with respect to w (cf equation \ref{primal gradient}) :
 \begin{equation}
-	w(\alpha(w)) =  \frac{1}{\lambda n} \sum_i  \E_{p(y|x ; w)} [\psi_i(y)] = - \frac{1}{\lambda} \nabla_w(\phi_i(-A_i^Tw))
+	w(\bm \alpha(w)) =  \frac{1}{\lambda n} \sum_i  \E_{p(y|x ; w)} [\psi_i(y)] = -  \frac{1}{\lambda n} \sum_i \nabla_w(\phi_i(-A_i^Tw))
 \end{equation}
-\textit{Remark:} In  full batch gradient descent, the update formula for a step size $\gamma$ is  : $w^+ = (1-\gamma\lambda)w - \gamma \nabla_w(\phi_i(-A_i^Tw))$.  For a (very large) step size $\gamma = 1/\lambda$, the update yields $\|w^+ - w(\alpha(w))\| = 0$.
+\textit{Remark:} In  full batch gradient descent, the update formula for a step size $\gamma$ is  : $w^+ = (1-\gamma\lambda)w - \frac{\gamma}{n} \sum_i \nabla_w(\phi_i(-A_i^Tw))$.  For a (very large) step size $\gamma = 1/\lambda$, the update yields $\|w^+ - w(\alpha(w))\| = 0$.
 
 \paragraph{Dual model:}
-
-\begin{equation}
-	g(w(\alpha),\alpha) = \frac{1}{n} \sum_i D_{KL} (\alpha_i || \alpha_i(w(\alpha))
-\end{equation}
-Once again, we observe a loop.
-The duality gap is the Kullback-Leibler divergence between the dual probabilities, and the primal  probabilities of the primal problem created by $w(\alpha)$.
+The gap for the dual model is naturally expressed as a sum of Fenchel duality gaps between the convex conjugates $\phi_i$ and $-H_i$. 
+\begin{align*}
+	g(w(\bm \alpha),\bm \alpha) 
+	& = \frac{1}{n} \sum_i \big [ \phi_i(-A_i^Tw(\bm \alpha)) - H_i(\alpha_i) \big ] + \lambda \|w(\bm \alpha)\|^2 \\
+	& =  \frac{1}{n} \sum_i \big [ \phi_i(-A_i^Tw(\bm \alpha)) - H_i(\alpha_i) - \langle \alpha_i,  -A_I^T w(\bm \alpha) \rangle \big ]
+\end{align*}
 Each of the divergence in the sum above is of course positive.
 They can be thought of as the duality gaps associated to each data point for the dual model.
-They are also equal to the Fenchel duality gap between the negative entropy and the partition function :
-\begin{equation*}
-	g_i(w,\alpha_i) = D_{KL} (\alpha_i || \alpha_i(w(\alpha)) = \phi_i(-A_i^T w) - H_i(\alpha_i) - \langle \alpha_i, -A_i^T w\rangle 
-\end{equation*}
-
+In particular, we have $\log(\alpha_i(w)) = -A_i^Tw - \phi_i(-A_i^Tw) \1$. Since $\alpha_i$ sums to one, we can inject this expression in the scalar product. We then get that each of the Fenchel duality gaps is also equal to the Kullback-Leibler divergence between the dual probability and the primal probability defined by the dual weights $w(\bm \alpha)$.
+\begin{equation}
+	\label{dual duality gaps}
+	g(w(\bm \alpha),\bm \alpha) = \frac{1}{n} \sum_i D_{KL} (\alpha_i || \alpha_i(w(\alpha))
+\end{equation}
+Once again, we observe a loop. Starting from the dual model, we define a primal which in turn defines a dual model.
 \textit{Remark:} Performing SDCA with a step-size $\gamma=1$ gives the update formula $\alpha_i^+ = \alpha_i(w(\alpha))$, i.e. $ D(\alpha_i^+ || \alpha_i(w(\alpha)) )=0$. 
 
-\paragraph{Idea:} Sampling according to these individual duality gaps, i.e. sampling more often points that are more suboptimal should improve the convergence rate.
-
-
-
-
+%%%%%%%%%%%%%%%%%
 \subsection{Stochastic Dual Coordinate Ascent}
 The SDCA algorithm updates the dual variable, one coordinate at a time, so as to maximize the dual objective $\mathscr D(\bm \alpha)$.
 In our case, the dual probabilities $\alpha_i$ are constrained to live in the simplex.
@@ -403,6 +377,15 @@ We can find the $2\epsilon$-approximate maximum of such a function defined on [0
 This can be done with a stabilized Newton method for instance, as described in the section 9-4 of the book \cite{press_numerical_1992}.
 
 
+%%%%%%%%%%%%
+\paragraph{Idea:} Sampling according to these individual duality gaps, i.e. sampling more often points that are more suboptimal should improve the convergence rate.
+In the article \cite{osokin_minding_2016}, the author apply a non-unform sampling scheme on the algorithm Block Coordinate Frank-Wolfe \cite{lacoste-julien_block-coordinate_2012}. 
+Their scheme is to sample proportionally to past-estimates of the individual duality gaps.
+In SDCA, we have access to duality gap $g_i$ if we pick the element i for almost no extra cost.
+Indeed each step involves computing $s_i = W x_i$ to get $\alpha_i(W(\alpha))=\nabla\phi(s_i)$.
+So we can get $\phi(s_i)$ in time $O(K)$.
+$H(\alpha_i)$ is already computed during the line search, and is done in $O(K)$ as well.
+Finally the scalar product $\langle\alpha_i, s_i\rangle$ has to be computed for a similar cost $O(K)$
 
 
 
