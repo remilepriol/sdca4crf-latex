@@ -273,21 +273,28 @@ They weights are the centroid of the corrected features, and the dual probabilit
 
 
 \subsection{Stochastic Dual Coordinate Ascent}
-As the name suggests the SDCA algorithm updates each line of the matrix $\alpha$ at a time.
-At each time step, one $i\in{1,..n}$ is picked at random.
-Then $\alpha_i$, which lives in the simplex, is updated so as to maximize the dual objective.
-Finding the optimal update for $\alpha_i$ is a constrained optimization problem in dimension K, which can be itself difficult. 
-In his 2013 paper \cite{shalev-shwartz_accelerated_2013-1}, Shalev-Shwartz analyzes the brilliant idea of updating $\alpha_i$ in the direction of a subgradient of the primal loss $\nabla\phi(W(\alpha)x_i)$.
-This is also what $\alpha_i$ should be equal to : $\alpha_i(W(\alpha))$.
-One can then either take steps of fixed size in the ascent direction $d_i := \alpha_i(W(\alpha)) - \alpha_i$, or can perform a line search on the segment between $\alpha_i$ and $\alpha_i(W(\alpha))$.
-\todo{insert drawing of the segment in the simplex.}
+The SDCA algorithm updates the dual variable, one coordinate at a time, so as to maximize the dual objective $\mathscr D(\bm \alpha)$.
+In our case, the dual probabilities $\alpha_i$ are constrained to live in the simplex.
+We have to update the variables one block at a time.
+The most natural way is to update one probability vector $\alpha_i \in \Delta_K$ altogether.
+This is what Shalev-Schwartz studied in his articles \cite{shalev-shwartz_accelerated_2013-1}.
 
-\todo{pseudo code of my algorithm.
-Specify why I can keep W as well as alpha.
-What are the memory and time cost of SDCA.
-How does it compare with SAG etc...}
-% $W^{(t+1)} = W^{(t)} + W_i(\alpha_i^{(t+1)}) - W_i(\alpha_i^{(t)})$. 
+At each time step, we pick $i\in{1,..n}$ at random.
+Then $\alpha_i$ is updated so as to maximize the dual objective.
+Finding the optimal update for $\alpha_i$ is a constrained optimization problem in dimension K, which is itself difficult. 
 
+Hence the brilliant idea analyzed by Shalev-Shwartz analyzes: update $\alpha_i$ towards a sub-gradient of the primal loss $\nabla\phi_i( - A_i^Tw(\alpha)) = \alpha_i(w(\bm \alpha))$.
+This way, $\alpha_i$ is getting closer from what it should be equal to $\alpha_i(w(\bm \alpha)$, and we can guarantee that the dual gap decreases enough.
+Plus, since $\Delta_K$ is convex, we are guaranteed to stay within the simplex after each step.  
+Formally, we define the ascent direction: 
+\begin{equation*}
+	d_i := \alpha_i(w(\alpha)) - \alpha_i
+\end{equation*} 
+We update:
+\begin{equation*}
+	\alpha_i^+ \leftarrow \alpha_i + \gamma d_i = (1-\gamma)\alpha_i + \gamma \alpha_i(w(\bm \alpha)) \quad \textrm{with} \quad \gamma \in [0,1]
+\end{equation*}
+The step size $\gamma$ is either fixed, either found via a line search on the segment between $\alpha_i$ and $\alpha_i(w(\alpha))$.
 
 \paragraph{Line search }: the function of the step size we want to optimize is 
 
