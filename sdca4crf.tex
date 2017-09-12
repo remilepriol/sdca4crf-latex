@@ -47,14 +47,21 @@ First we focus on problems with a small number of classes for which SDCA's appli
 This is the framework of multinomial logistic regression.
 Then we elaborate the theory for structured prediction problems.
 In structured prediction, each class or label is a structured object.
+For instance, if the labels are words from the dictionary, they can be seen as chains of letters.
 There are too many of these objects to count them all.
-More precisely we want to build a map from an input $x$ to a structured output $y$.
-$y$ lives in a space that is finite but that is exponentially big in the size of $x$.
-However we can use the structure over these $y$ to make the problem tractable.
+More precisely  the labels live in a space that is finite but that is exponentially big in the size of the input.
+For instance, there exist $26^5 \sim 10^7$ lower case strings of length 5. 
+However we can use the structure over the labels to make the problem tractable.
 
-In Conditional Random Fields (CRF), the labels distribution conditioned on the input is Markov with respect to an undirected graphical model (mathematician language) / Markov random field (computer scientist language). 
+In the Conditional Random Fields (CRF) setting, the distribution of labels conditioned on an input is Markov with respect to an undirected graphical model (mathematician language) / Markov random field (computer scientist language). 
 The dual problem's natural variables are the joint probabilities over all the potential labels.
-We adapt the algorithm to the structure of the output by considering the marginals with respect to the cliques of that graph.
+We have to manipulate this joint for every data point.
+This does not fit in memory.
+If the graphical model has a junction tree, we can leverage the Markov property of the labels
+The marginals with respect to the cliques of that tree contain all the information of the joint probability.
+We use these marginals as a new variable.
+
+We test SDCA on synthetic mixtures of gaussians for the logistic regression, and on the OCR data set for the CRF.
 
 \tableofcontents
 
@@ -62,16 +69,18 @@ We adapt the algorithm to the structure of the output by considering the margina
 
 \subsection{Linear Models}
 
-We consider the following classical supervised setting.
-We observe n data points $x_i \in \mathcal{X}$, with their labels $y_i\in \mathcal{Y}:={1,..,K}$, for $i \in {1,..,n}$.
+We consider the classical supervised learning setting.
+We observe n data points $x_i \in \mathcal{X}$, with their labels $y_i\in \Y_i:= \{1,..,K\}$, for $i \in {1,..,n}$.
+We index i to $\Y$ in order to be consistent with the second part on CRF, where the label space depends on the input $x_i$.
+Similarly, we will index i to every function whose domain of definition depend on the sample i.
 We assume that the pairs $(x_i, y_i)$ are sampled independently and are identically distributed (i.i.d hypothesis).
-Given a new vector $x$, we want to predict what is the corresponding label $y$. 
+Given a new vector $x$, we want to predict the corresponding label $y$. 
 To do so, we first estimate a probability distribution over the classes $p(y|x ; w)$.
 $w$ are the \textbf{w}eights that parametrize this distribution. 
 The predicted label is then defined as the mode of this distribution : $\hat y = h_w(x) := \argmax_y p(y| x ; w)$.
 
 \paragraph{Features.}
-We have no assumption on the space $\mathcal{X}$ but we assume a feature extractor $F:\mathcal{X}\times \mathcal{Y} \rightarrow \R^d$.
+We have no assumption on the space $\mathcal X$ but we assume a feature extractor $F:\mathcal X \times \mathcal Y \rightarrow \R^d$.
 These features can be either pre-trained or handcrafted.
 For each couple data point - label, we get features as a vector of dimension d.
 
@@ -119,13 +128,13 @@ This means minimizing an empirical loss:
 \begin{equation}
 	\min_w \sum_{y=1}^K \mathcal L (h_w(x_i),y_i)
 \end{equation}
-where $\mathcal L: \mathcal Y \times \mathcal Y \rightarrow \R_+$ is a loss between labels.
+where $\mathcal L: \Y \times \Y \rightarrow \R_+$ is a loss between labels.
 A typical example is the 0-1 loss $\mathcal L(y, y') : = \1_{y=y'}$.
 Unfortunately, this problem is very hard.
 Since the loss is defined on a discrete space, there is no notion of continuity, even less so differentiability.
 We are left with exhaustive search approaches which are intractable.
 Hence the choice to consider the distribution probability $p( . | x ; w) \in \Delta_K$, where $\Delta_K$ denotes the simplex of dimension K.
-We replace the discrete space $\mathcal Y$ by the continuous space $\Delta_K$.
+We replace the discrete space $\Y$ by the continuous space $\Delta_K$.
 We can define continuous or differentiable functions over this space, and get a tractable optimization problem.
  
 We want our model to give the maximum probability to the observed pairs $(x_i, y_i)$.
@@ -150,7 +159,7 @@ We can then remove the linear term from the objective:
 \end{equation*}
 We can write this problem in a more vectorial form.
 Denote the log-partition function (the log-sum-exp) $\phi(z) = \log \big(\sum_{y=1}^K \exp(z_y)\big)$. 
-Denote $A_i$ the $d \times |\Y|$ matrix whose columns are the $\psi_i(y)$ for $y \in \Y$.
+Denote $A_i$ the $d \times |\Y_i|$ matrix whose columns are the $\psi_i(y)$ for $y \in \Y_i$.
 From now on we will refer to the following formulation as \textit{primal problem}.
 \begin{equation}
 	\label{primal problem}
@@ -170,12 +179,12 @@ The $l^2$ regularization guarantees that the function we are optimizing is at le
 \paragraph{Gradients.}
 Let's notice that the gradient of the log-partition function evaluated in $-A_i^Tw$ is the conditional probability vector of the classes given x, as defined by the softmax function.
 \begin{equation}
-	\nabla \phi_i(-A_i^Tw) = (p(y | x ; w))_{y \in \Y}
+	\nabla \phi_i(-A_i^Tw) = (p(y | x_i ; w))_{y \in \Y_i}
 \end{equation}
 The gradient of the right hand term with respect to w is the opposite of the expectation of the corrected features according to these probabilities.
 \begin{equation}
 	\label{primal gradient}
-	\nabla_w (\phi_i(-A_i^Tw)) = - \E_{y \sim p(. | x ; w)} [\psi_i(y)]
+	\nabla_w (\phi_i(-A_i^Tw)) = - \E_{y \sim p(. | x_i ; w)} [\psi_i(y)]
 \end{equation}
 This will prove useful in the following.
 
@@ -201,13 +210,13 @@ The Fenchel dual associated to this problem is derived as follows :
 \end{align*}
 When $g$ is the $l^2$ regularization, the convex conjugate is $g^*: z \mapsto \frac{1}{2\lambda}\|z\|^2$, with domain $\R^d$.
 The convex conjugate of the log-sum-exp is the negative entropy. 
-Its domain is $\Delta_{|\Y|}$ the simplex of dimension $|\Y|$.
+Its domain is $\Delta_i$ the simplex of dimension $|\Y_i|$.
 \begin{equation}
-	-\phi_i^*(\alpha_i) = H_i(\alpha_i) := - \sum_{y \in \Y} \alpha_i(y) \log(\alpha_i(y))
+	-\phi_i^*(\alpha_i) = H_i(\alpha_i) := - \sum_{y \in \Y_i} \alpha_i(y) \log(\alpha_i(y))
 \end{equation}
 Finally we get the canonical dual formulation for the maximum likelihood:
 \begin{equation}
-	\max_{\bm \alpha | \forall i, \alpha_i \in \Delta_{|\Y|}} \mathscr{D}(\bm \alpha) = -\frac{1}{2\lambda} \| \frac{1}{n} \sum_i A_i^T \alpha_i \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
+	\max_{\bm \alpha | \forall i, \alpha_i \in \Delta_i} \mathscr{D}(\bm \alpha) = -\frac{1}{2\lambda} \| \frac{1}{n} \sum_i A_i^T \alpha_i \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
 \end{equation}
 $\bm \alpha$ is a n*K matrix whose lines live in the simplex.
 $\alpha$ should be interpreted as a probability density on the labels for each data point.
@@ -238,12 +247,12 @@ Consequently, we define the dual weights, or primal parameter associated to $\bm
 The dual problem becomes:
 \begin{equation}
 	\label{dual problem}
-	\max_{\bm \alpha | \forall i, \alpha_i \in \Delta_{|\Y|}} -\frac{\lambda}{2} \| w(\bm \alpha) \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
+	\max_{\bm \alpha | \forall i, \alpha_i \in \Delta_i} -\frac{\lambda}{2} \| w(\bm \alpha) \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
 \end{equation}
 
 Formula \ref{dual to primal} can be written in a number of ways, each time outlining some property.
 We write A the horizontal concatenation of the $A_i$.
-It is a matrix of size $d \times n|\Y|$.
+It is a matrix of size $d \times \sum_i |\Y_i|$.
 \begin{align}
 	w(\bm \alpha) & = \frac{1}{\lambda n} A \alpha \label{linearity} \\
 	 & = \frac{1}{\lambda} \E_{i} [ \E_{y \sim \alpha_i} [\psi_i(y)]] \label{corrected features centroid} \\
