@@ -207,8 +207,8 @@ We note $g^*$ and $\phi_i^*$ the convex conjugates (aka Fenchel dual functions) 
 The Fenchel dual associated to this problem is derived as follows :
 \begin{align*}
 	 \min_w \ f(w) + \frac{1}{n} \sum_i \phi_i(- A_i^T w) & = \min_w \ \max_{z\in \dom g^*} z^Tw - g^*(z) + \frac{1}{n} \sum_i \max_{\alpha_i \in \dom \phi_i^*} \alpha_i^T (-A_i^T w) - \phi_i^*(\alpha_i) \\
-	 	& \geq \max_{z, \bm \alpha} \  \min_w w^T(z - \frac{1}{n} \sum_i A_i \alpha_i) - g^*(z) - \frac{1}{n} \sum_i \phi_i^*(\alpha_i) \\
-		& =  \max_{\bm \alpha} \   - g^*(\frac{1}{n} \sum_i A_i \alpha_i) + \frac{1}{n} \sum_i -\phi_i^*(\alpha_i) \quad \textrm{if} \quad z= \frac{1}{n} \sum_i A_i^T \alpha_i \quad , -\infty \textrm{ otherwise.}\\
+	 	& \geq \max_{z, \alpha} \  \min_w w^T(z - \frac{1}{n} \sum_i A_i \alpha_i) - g^*(z) - \frac{1}{n} \sum_i \phi_i^*(\alpha_i) \\
+		& =  \max_{\alpha} \   - g^*(\frac{1}{n} \sum_i A_i \alpha_i) + \frac{1}{n} \sum_i -\phi_i^*(\alpha_i) \quad \textrm{if} \quad z= \frac{1}{n} \sum_i A_i^T \alpha_i \quad , -\infty \textrm{ otherwise.}\\
 \end{align*}
 When $g$ is the $l^2$ regularization, the convex conjugate is $g^*: z \mapsto \frac{1}{2\lambda}\|z\|^2$, with domain $\R^d$.
 The convex conjugate of the log-sum-exp is the negative entropy. 
@@ -218,9 +218,9 @@ Its domain is $\Delta_i$ the simplex of dimension $|\Y_i|$.
 \end{equation}
 Finally we get the canonical dual formulation for the maximum likelihood:
 \begin{equation}
-	\max_{\bm \alpha | \forall i, \alpha_i \in \Delta_i} \mathscr{D}(\bm \alpha) = -\frac{1}{2\lambda} \| \frac{1}{n} \sum_i A_i^T \alpha_i \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
+	\max_{\alpha | \forall i, \alpha_i \in \Delta_i} \mathscr{D}(\alpha) = -\frac{1}{2\lambda} \| \frac{1}{n} \sum_i A_i^T \alpha_i \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
 \end{equation}
-$\bm \alpha$ is a n*K matrix whose lines live in the simplex.
+$\alpha$ is a n*K matrix whose lines live in the simplex.
 $\alpha$ should be interpreted as a probability density on the labels for each data point.
 
 \subsubsection{Optimality Condition}
@@ -230,7 +230,7 @@ This is true because the $l^2$ regularization is defined on the whole space $\R^
 
 The primal problem is strongly convex, so there is only one minimum.
 Similarly, the dual problem is strongly concave, so there is only one maximum.
-We consider the global optimum $(w^*,z^*,\bm\alpha^*)$.
+We consider the global optimum $(w^*,z^*,\alpha^*)$.
 $(w^*,z^*)$ should be dual variables for the convex conjugates $(g, g^*)$.
 \begin{equation*}
 	g(w^*) + g^*(z^*) - \langle w^*, z^* \rangle = \frac{\lambda}{2} \| w^* - \frac{1}{\lambda} z^* \|^2 = 0
@@ -239,31 +239,32 @@ Hence the optimality condition:
 \begin{equation*}
 	w^* = 	\frac{1}{\lambda} z^* =  \frac{1}{\lambda n} \sum_i A_i^T \alpha_i^*
 \end{equation*}
-Consequently, we define the dual weights, or primal parameter associated to $\bm \alpha$, with the equation :
+Consequently, we define the dual weights, or primal parameter associated to $\alpha$, written with a bold $\bm w$.
 \begin{equation}
 	\label{dual to primal}
-	w(\bm \alpha) =   \frac{1}{\lambda n} \sum_i A_i^T \alpha_i
+	\bm w(\alpha) =   \frac{1}{\lambda n} \sum_i A_i^T \alpha_i
 \end{equation}
 The dual problem becomes:
 \begin{equation}
 	\label{dual problem}
-	\max_{\bm \alpha | \forall i, \alpha_i \in \Delta_i} -\frac{\lambda}{2} \| w(\bm \alpha) \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
+	\max_{\alpha | \forall i, \alpha_i \in \Delta_i} -\frac{\lambda}{2} \| \bm w(\alpha) \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
 \end{equation}
 
 Formula \ref{dual to primal} can be written in a number of ways, each time outlining some property.
 We write A the horizontal concatenation of the $A_i$.
 It is a matrix of size $d \times \sum_i |\Y_i|$.
 \begin{align}
-	w(\bm \alpha) & = \frac{1}{\lambda n} A \alpha \label{linearity} \\
+	\bm w(\alpha) & = \frac{1}{\lambda n} A \alpha \label{linearity} \\
 	 & = \frac{1}{\lambda} \E_{i} [ \E_{y \sim \alpha_i} [\psi_i(y)]] \label{corrected features centroid} \\
 	 & =   \frac{1}{\lambda} \E_{i} [F(x_i, y_i)] - \frac{1}{\lambda} \E_{i} [ \E_{y \sim \alpha_i} [F(x_i, y)]]
 	 \label{centroid difference}
 \end{align}
 The expectations over i assume that i is a uniform random variable taking its values between 1 and n. 
-Equation \ref{linearity} highlights the linearity in $\bm \alpha$. Equation \ref{corrected features centroid} shows that this the centroid of the corrected features. Equation \ref{centroid difference} shows that this is the difference between the empirical feature centroid, and the centroids defined by $\bm \alpha$.
+Equation \ref{linearity} highlights the linearity in $\alpha$. Equation \ref{corrected features centroid} shows that this the centroid of the corrected features. Equation \ref{centroid difference} shows that this is the difference between the empirical feature centroid, and the centroids defined by $\alpha$.
 
 We can also derive the primal problem from the dual problem.
-We then get another optimality condition $\bm \alpha(w^*) = \bm \alpha^*$ where $\alpha(w)$ is the probability density on the training set defined by the weights w (equation \ref{primal probability}).
+We then get another optimality condition $\bm \alpha(w^*) = \alpha^*$.
+$\bm \alpha(w)$ with a bold $\bm \alpha$ is the probability density on the training set defined by the weights w (equation \ref{primal probability}).
 \begin{equation}
 	\label{primal to dual}
 	\forall i, \alpha_i(w) = \nabla\phi_i(-A_i^Tw) = p(.|x; w) \propto \exp(-w^T \psi_i(.))
@@ -279,28 +280,29 @@ It pushes the $\alpha_i$ towards a more uniform distribution.
 Thus the role of the terms is inverted compared to the primal problem : the data fitting term is the squared euclidean distance, and the regularization is the entropy.
 
 \paragraph{Naming :} 
-We call \textit{primal model}, the one where we are given \textit{primal weights} $w$, from which we deduce \textit{primal probabilities} $\alpha_i(w)$.
-We call \textit{dual model}, the one where we are given \textit{dual probabilities} $\alpha_i$, from which we deduce \textit{dual weights} $w(\alpha)$ as the centroid of the corrected feature vectors.
+We call \textit{primal model}, the one where we are given \textit{primal weights} $w$, from which we deduce \textit{primal probabilities} $\bm \alpha_i(w)$.
+We call \textit{dual model}, the one where we are given \textit{dual probabilities} $\alpha_i$, from which we deduce \textit{dual weights} $\bm w(\alpha)$ as the centroid of the corrected feature vectors.
 The optimality conditions tell us that at the optimum, these two models are equal.
-They weights are the centroid of the corrected features, and the dual probabilities are given by the softmax function.
-
+$\alpha^*$ is a fixed point for $\bm \alpha \circ \bm w$.
+$w^*$ is a fixed point for $\bm w \circ \bm \alpha$.
+The optimization can be seen as a back and forth between the primal variable and the dual variable.
 
 %%%%%%%%%%%%%
 \subsection{Duality Gaps}
 
 The duality gap $g(w,\alpha)$ is the difference between the value  of the primal problem evaluated in $w$, and the value of the dual problem evaluated in $\alpha$.
 \begin{equation*}
-	g(w,\bm \alpha) := \mathscr P(w) - \mathscr D(\bm \alpha)
+	g(w,\alpha) := \mathscr P(w) - \mathscr D(\alpha)
 \end{equation*}
 It is interesting to look at the duality gap for both the primal model and the dual model, i.e. the duality gap between the primal weights and the primal probability, and the duality gap between the dual weights and the dual probability.
 
 \paragraph{Primal model:}
-We inject the expression of $\alpha_i(w)$ in the entropy to find the formula:
+We inject the expression of $\bm \alpha_i(w)$ in the entropy to find the formula:
 \begin{equation}
 	\label{primal duality gap}
-	g(w,\bm \alpha(w)) = \frac{\lambda}{2} \|w-w(\alpha(w))\|^2
+	g(w,\bm \alpha(w)) = \frac{\lambda}{2} \|w-w(\bm \alpha(w))\|^2
 \end{equation}
-This formula involves $w(\alpha(w))$.
+This formula involves $\bm w(\bm \alpha(w))$.
 This is what the dual model created by the primal probabilities think the weights should be. 
 
 In fact, using equation \ref{primal gradient} and \ref{dual to primal}, we can express the gradient of the primal objective 	as :
@@ -308,60 +310,61 @@ In fact, using equation \ref{primal gradient} and \ref{dual to primal}, we can e
 	\nabla \mathscr P(w) 
 	& = \lambda w + \frac{1}{n} \sum_i \nabla_w(\phi_i(-A_i^Tw)) \\
 	& = \lambda \bigg [ w - \frac{1}{\lambda n} \sum_i \E_{y \sim p(. | x ; w)} [\psi_i(y)] \bigg ] \\
-	& = \lambda [ w - w(\bm \alpha(w))]
+	& = \lambda [ w - \bm w(\bm \alpha(w))]
 \end{align*}
 This means that the squared norm of the batch gradient is proportional to a duality gap.
 \begin{equation}
 	g(w,\bm \alpha(w)) = \frac{1}{2 \lambda} \|\nabla \mathscr P(w)\|^2
 \end{equation}
-In SAG, (see \cite{schmidt_non-uniform_2015}), Marc Schmidt et al. use an estimate of the gradient of the former as a descent direction.
-They also use the norm of this estimate as a certificate to decide when to stop.
-The justification was that the gradient converges toward zero.
+In SAG, (see \cite{schmidt_non-uniform_2015}), Schmidt et al. use an estimator right hand term as a descent direction.
+They also use the norm of this estimator as a certificate to decide when to stop.
+The justification was that since the gradient converges toward zero, the estimator converges toward zero as well.
 If the objective is m-strongly convex there is also the bound:
 \begin{equation*}
 	\mathscr P (w) - \mathscr P(w^*) \leq \frac{1}{2 m}\|\nabla \mathscr P (w)\|^2
 \end{equation*}
 since the objective is at least $\lambda$-strongly convex we retrieve that the duality gap dominates the primal sub-optimality.
+It means that they could monitor not only the primal convergence, but also the dual convergence.
 
 \paragraph{Dual model:}
 The gap for the dual model is naturally expressed as a sum of Fenchel duality gaps between the convex conjugates $\phi_i$ and $-H_i$. 
 \begin{align*}
-	g(w(\bm \alpha),\bm \alpha) 
-	& = \frac{1}{n} \sum_i \big [ \phi_i(-A_i^Tw(\bm \alpha)) - H_i(\alpha_i) \big ] + \lambda \|w(\bm \alpha)\|^2 \\
-	& =  \frac{1}{n} \sum_i \big [ \phi_i(-A_i^Tw(\bm \alpha)) - H_i(\alpha_i) - \langle \alpha_i,  -A_I^T w(\bm \alpha) \rangle \big ]
+	g(\bm w(\alpha),\alpha) 
+	& = \frac{1}{n} \sum_i \big [ \phi_i(-A_i^T \bm w(\alpha)) - H_i(\alpha_i) \big ] + \lambda \|\bm w(\alpha)\|^2 \\
+	& =  \frac{1}{n} \sum_i \big [ \phi_i(-A_i^T \bm w(\alpha)) - H_i(\alpha_i) - \langle \alpha_i,  -A_I^T \bm w(\alpha) \rangle \big ]
 \end{align*}
 Each of the divergence in the sum above is of course positive.
 They can be thought of as the duality gaps associated to each data point for the dual model.
-In particular, we have $\log(\alpha_i(w)) = -A_i^Tw - \phi_i(-A_i^Tw) \1$. Since $\alpha_i$ sums to one, we can inject this expression in the scalar product. We then get that each of the Fenchel duality gaps is also equal to the Kullback-Leibler divergence between the dual probability and the primal probability defined by the dual weights $w(\bm \alpha)$.
+In particular, we have $\log(\alpha_i(w)) = -A_i^Tw - \phi_i(-A_i^Tw) \1$. Since $\alpha_i$ sums to one, we can inject this expression in the scalar product. We then get that each of the Fenchel duality gaps is also equal to the Kullback-Leibler divergence between the dual probability and the primal probability defined by the dual weights $w(\alpha)$.
 \begin{equation}
 	\label{dual duality gaps}
-	g(w(\bm \alpha),\bm \alpha) = \frac{1}{n} \sum_i D_{KL} (\alpha_i || \alpha_i(w(\alpha))
+	g(\bm w(\alpha),\alpha) = \frac{1}{n} \sum_i D_{KL} (\alpha_i || \bm \alpha_i(\bm w(\alpha))
 \end{equation}
 Once again, we observe a loop. Starting from the dual model, we define a primal which in turn defines a dual model.
-\textit{Remark:} Performing SDCA with a step-size $\gamma=1$ gives the update formula $\alpha_i^+ = \alpha_i(w(\alpha))$, i.e. $ D(\alpha_i^+ || \alpha_i(w(\alpha)) )=0$. (See next section).
+\textit{Remark:} Performing SDCA with a step-size $\gamma=1$ gives the update formula $\alpha_i^+ = \bm \alpha_i(\bm w(\alpha))$, i.e. $ D(\alpha_i^+ || \bm \alpha_i(\bm w(\alpha)) )=0$. (See next section).
 
 %%%%%%%%%%%%%%%%%
 \subsection{Stochastic Dual Coordinate Ascent}
-The SDCA algorithm updates the dual variable, one coordinate at a time, so as to maximize the dual objective $\mathscr D(\bm \alpha)$.
+The SDCA algorithm updates the dual variable, one coordinate at a time, so as to maximize the dual objective $\mathscr D(\alpha)$.
 In our case, the dual probabilities $\alpha_i$ are constrained to live in the simplex.
 We have to update the variables one block at a time.
 The most natural way is to update one probability vector $\alpha_i \in \Delta_K$ altogether.
 This is what Shalev-Schwartz studied in his articles \cite{shalev-shwartz_accelerated_2013-1}.
 Finding the optimal update for $\alpha_i$ is a constrained optimization problem in dimension K, which is itself difficult. 
-The brilliant idea analyzed by Shalev-Shwartz is to update $\alpha_i$ towards a sub-gradient of the primal loss $\nabla\phi_i( - A_i^Tw(\alpha)) = \alpha_i(w(\bm \alpha))$.
-This way, $\alpha_i$ is getting closer from what it should be equal to $\alpha_i(w(\bm \alpha)$, and we can guarantee that the duality gap decreases enough.
+The brilliant idea analyzed by Shalev-Shwartz is to update $\alpha_i$ towards a sub-gradient of the primal loss $\nabla\phi_i( - A_i^T\bm w(\alpha)) = \bm \alpha_i(\bm w(\alpha))$.
+This way, $\alpha_i$ is getting closer from what it should be equal to $\bm \alpha_i(\bm w(\alpha)$, and we can guarantee that the duality gap decreases enough.
 Plus, since $\Delta_K$ is convex, we are guaranteed to stay within the simplex after each step.  
 Formally, we define the dual ascent direction and the associated primal descent direction:
 \begin{align*}
-	d_i &:= \alpha_i(w(\alpha)) - \alpha_i \\
-	v_i &:= \frac{1}{\lambda n} A_i d_i  = \frac{1}{\lambda n} \big [ \E_{y \sim \alpha_i} [F(x_i, y)] - \E_{y \sim  \alpha_i(w(\alpha))} [F(x_i, y)] \big ]
+	d_i &:= \bm \alpha_i(\bm w(\alpha)) - \alpha_i \\
+	v_i &:= \frac{1}{\lambda n} A_i d_i  = \frac{1}{\lambda n} \big [ \E_{y \sim \alpha_i} [F(x_i, y)] - \E_{y \sim  \bm \alpha_i(\bm w(\alpha)) } [F(x_i, y)] \big ]
 \end{align*} 
 The update formula is:
 \begin{equation*}
-	\alpha_i^+ \leftarrow \alpha_i + \gamma d_i = (1-\gamma)\alpha_i + \gamma \alpha_i(w(\bm \alpha)) \quad \textrm{with} \quad \gamma \in [0,1]
+	\alpha_i^+ \leftarrow \alpha_i + \gamma d_i = (1-\gamma)\alpha_i + \gamma \bm \alpha_i(\bm w(\alpha)) \quad \textrm{with} \quad \gamma \in [0,1]
 \end{equation*}
-The step size $\gamma$ is either fixed, either found via a line search on the segment between $\alpha_i$ and $\alpha_i(w(\alpha))$. 
-It belongs in $[0,1]$ because we want a convex combination of $\alpha_i$ and $\alpha_i(w(\alpha))$ to remain in the simplex without further checks. 
+The step size $\gamma$ is either fixed, either found via a line search on the segment between $\alpha_i$ and $\bm \alpha_i(\bm w(\alpha))$. 
+It belongs in $[0,1]$ because we want a convex combination of $\alpha_i$ and $\bm \alpha_i(\bm w(\alpha))$ to remain in the simplex without further checks. 
 Most importantly, it is necessary for the proof of the linear convergence rate in \cite{shalev-shwartz_accelerated_2013-1}. 
 See algorithm \ref{sdca for logreg} for details.
 
@@ -372,7 +375,7 @@ See algorithm \ref{sdca for logreg} for details.
 \begin{algorithmic}
         %
         \STATE $\forall i,$ initialize $\alpha_i^{(0)}$ at random in $\Delta_K$
-        \STATE Let $w^{(0)} = \frac{1}{\lambda n} A \bm \alpha$  
+        \STATE Let $w^{(0)} = \frac{1}{\lambda n} A \alpha$  
         \STATE Let $\forall i,\  g_i = 1$ (optional)
         %
        \FOR{$k=0\dots K$}
@@ -426,12 +429,12 @@ They can apply this scheme because the algorithm Block Coordinate Frank-Wolfe \c
 To make this work, they have to perform a batch update of their duality gaps every ten epochs or so.
 
 In SDCA, we have access to duality gap $g_i$ if we pick the element i for almost no extra cost.
-Each step involves computing $\alpha_i(W(\alpha))=\nabla\phi(s_i)$.
+Each step involves computing $\alpha_i(\bm w(\alpha))=\nabla\phi(s_i)$.
 Computing the KL-divergence takes a complexity $O(K)$.
 
 \subsection{Results}
 
-SDCA gives proper results on synthetic gaussian mixtures datasets. 
+SDCA gives good results on synthetic gaussian mixtures datasets. 
 \begin{figure}[ht]
 	\label{gmm results}
 	\includegraphics[width=\textwidth]{images/nonuniform_is_better.pdf}
