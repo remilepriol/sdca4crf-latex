@@ -642,11 +642,11 @@ We can get the primal marginals with a marginalization oracle, such as message p
         %
        \FOR{$k=0\dots K$}
                 \STATE Pick $i$ at random in $\{1,\ldots,n\}$ (optionally, proportional to $g_i$)
-                \STATE Compute $\forall c, \nabla_{i, c} (y_c) := p(y_c|x; w^{(k)})$ (marginalization oracle)
+                \STATE Compute $\forall c, \mu_{i, c}' (y_c) := p(y_c|x; w^{(k)})$ (marginalization oracle)
                 %
-                \STATE Let $g_i = \mathcal D(\mu_i || \nabla_i)$ (optional)
+                \STATE Let $g_i = \mathcal D(\mu_i || \mu_i')$ (optional)
                 %
-                \STATE Let $d_i = \nabla_i - \mu_i^{(k)}$ (ascent direction)
+                \STATE Let $d_i = \mu_i' - \mu_i^{(k)}$ (ascent direction)
                 \STATE Let $v_i = \frac{1}{\lambda} B_i d_i $ (primal direction)
                 \STATE Solve $\gamma^* = \argmax_{\gamma \in [0,1]} \mathcal H_i(\mu_i^{(k)} + \gamma d_i) - \frac{\lambda n}{2} \| w^{(k)} + \frac{\gamma}{n} v_i \|^2$ (Line Search)
                 %
