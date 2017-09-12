@@ -41,7 +41,7 @@
 We apply the Stochastic Dual Coordinate Ascent (SDCA) algorithm to multi-class classification problems.
 These problems are formulated as $l^2$ regularized negative log-likelihood minimization. 
 We consider their dual : an entropy regularized centroid mean square error.
-SDCA update one (block) coordinate at a time in the dual to raise the dual score.
+SDCA update coordinates of the dual variable, one at a time or block by block, so as to raise the dual score.
   
 First we focus on problems with a small number of classes for which SDCA's application is straight forward.
 This is the framework of multinomial logistic regression.
@@ -390,27 +390,26 @@ the function of the step size we want to maximize is
 	f_i(\gamma) = -\frac{\lambda n}{2} \|w + \gamma v_i\|^2 + H(\alpha_i + \gamma d_i) + \cst
 \end{equation}
 where $d_{[i]}$ is the matrix n*K whose line i is $d_i$ and where the rest is 0.
-We expand the first term  of \ref{line search 1} with the formulation above to highlight the quadratic dependency on $\gamma$.
+We expand the first term in equation \ref{line search 1} with the formulation above to highlight the quadratic dependency on $\gamma$.
 Calculating the derivatives is straight forward.
 \begin{align*}
 	f(\gamma)
 	& = H_i(\alpha_i^{(k)} + \gamma d_i)
-	- \gamma \lambda  \langle w^{(k)} , v_i \rangle 
-	- \gamma^2 \frac{\lambda}{2n} \|v_i \|^2
+	- \gamma \lambda n  \langle w^{(k)} , v_i \rangle 
+	- \gamma^2 \frac{\lambda n}{2} \|v_i \|^2
 	+ \cst
 	\\
 	f'(\gamma) & =  - \langle d_i, \log(\alpha_i + \gamma d_i) \rangle
-	- \lambda  \langle w^{(k)} , v_i \rangle 
-	- \gamma \frac{\lambda}{n} \|v_i \|^2 
+	- \lambda n \langle w^{(k)} , v_i \rangle 
+	- \gamma \lambda n \|v_i \|^2 
 	\\
 	f''(\gamma) & = - \sum_{y} \frac{d_{i}(y)^2 }{ \alpha_i(y) + \gamma d_i(y) }
-	- \frac{\lambda}{n} \|v_i \|^2 
+	- \lambda n  \|v_i \|^2 
 \end{align*}
-We can find the $2\epsilon$-approximate maximum of such a function defined on [0,1] by looking at the $\epsilon$-approximate root of its derivative on $[\epsilon,1-\epsilon]$.
+We compute $\langle w^{(k)} , v_i \rangle$ and $ \|v_i \|^2$ once and for all at the beginning of each line search for a cost $O(d)$. Then each function estimate has a toll $O(\|Y\|)$.\\
+We can find the $2\epsilon$-approximate maximum of $f'$ defined on ]0,1[ by looking at its $\epsilon$-approximate root on $[\epsilon,1-\epsilon]$.
 This can be done with a stabilized Newton method for instance, as described in the section 9-4 of the book \cite{press_numerical_1992}.
 
-
-%%%%%%%%%%%%
 \paragraph{Non-Uniform Sampling:} 
 In the article \cite{osokin_minding_2016}, the authors improve the empirical rate of convergence of their stochastic algorithm with non-uniform sampling.
 More precisely, they sample data points with a probability proportional to past-estimates of the individual duality gaps.
@@ -441,19 +440,24 @@ SDCA gives proper results on synthetic gaussian mixtures datasets.
 
 \subsection{Structured Prediction}
 
-Structured prediction is a sub genre of multi-class classification problem.
-The particularity is that we have structure information about the class themselves.
-For instance we would like to identify words from images of letters, and we know that there is a chain structure on these letters (OCR\todo{put citation   here}).
-Or we could parse written mathematical expressions and we know that there is a natural tree structure on these expressions.
+Structured prediction is a category of multi-class classification problems.
+The particularity is that we have information about the structure of the classes.
+For instance we would like to identify a word of length T from T images of letters, and we know that there is a chain structure on these letters (OCR \todo{put citation   here}).
+Or we could parse sentences and we know that there is a natural tree structure defined by the grammar.
 Another typical instance is semantic segmentation in images : we know a priori that boundaries between objects should be sharp and that objects are usually connected areas.
 Let's write x for the input data point and y for the output class that lives in $\Y_x$.
 We index $x$ to $\Y$ because the space of classes can depend on $x$.
 For instance, the word we predict will have as many letters as we have images, and the semantic segmentation will be an image of the same size as the input image. 
 
 Compared to standard multi-class classification, we need to exploit the structure because the output space $\Y_x$ has a size that is typically exponential in the size of the input x.
-A brute force approach listing the probabilities for each class to take the max is thus intractable.
+Even for prediction, a brute force approach listing the probabilities class by class and taking the max is intractable.
 The structure generally allows us to explore the space of classes in a clever way, to compute the mode of this distribution or the marginal probabilities on some part of the structure.
-We call the algorithm that returns the mode the \textit{max oracle} and the one that returns the marginals the \textit{marginalization oracle}. 
+We call the algorithm that returns the mode the \textit{max oracle} and the one that returns the marginals the \textit{marginalization oracle}.
+They are black boxes for the optimization algorithm, hence the name oracle.
+They generally take time.
+The performance of a structured prediction algorithm is generally measured by the number of oracle calls.
+In reality, marginalization oracle are often slower than maximization oracle, and there are a number of operations besides these oracles.
+Yet the number of oracle call gives a good idea of the overall complexity of an algorithm.
 
 Formally, for any pair (input, output) we want to define a structured score $s_w(x, y)$ parametrized by a vector w.
 This score should represent the confidence that we have that the point x belongs to the class y through the equation $p(y|x ; w)\propto \exp(s_w(x, y))$.
