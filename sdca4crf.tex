@@ -77,23 +77,25 @@ We assume that the pairs $(x_i, y_i)$ are sampled independently and are identica
 Given a new vector $x$, we want to predict the corresponding label $y$. 
 To do so, we first estimate a probability distribution over the classes $p(y|x ; w)$.
 $w$ are the \textbf{w}eights that parametrize this distribution. 
-The predicted label is then defined as the mode of this distribution : $\hat y = h_w(x) := \argmax_y p(y| x ; w)$.
+The predicted label is then defined as a mode of this distribution : $\hat y = h_w(x) \in \argmax_y p(y| x ; w)$.
 
 \paragraph{Features.}
-We have no assumption on the space $\mathcal X$ but we assume a feature extractor $F:\mathcal X \times \mathcal Y \rightarrow \R^d$.
+We have no assumption on the space $\mathcal X$ but we have access to a feature extractor $F:\mathcal X \times \mathcal Y \rightarrow \R^d$.
 These features can be either pre-trained or handcrafted.
 For each couple data point - label, we get features as a vector of dimension d.
 
 \paragraph{Linear Assumption.}
-The logarithm of our probability can be written as linear function of these features, up to a normalization constant.
-The weights vector w has the same dimension as the features.
+We assume that the score of a label is given as a linear function of its feature.
+A consequence is that we have as many weights vas we have  features.
+$w$ has dimension d.
+We apply the softmax on these scores to get a probability vector. 
 \begin{equation}
 	\label{primal probability}
 	p(y | x ; w) := \frac{\exp(w^TF(x, y))}{\sum_{y' \in \mathcal{Y}} \exp(w^TF(x, y'))}
 \end{equation}
 
-In the simpler setting, when there is few classes ($K \leq \sim 10^3$), the features we use are a block encoding of the class.
-If x are vectors of dimension $d'$, we set $d=Kd'$. $F(x, y=k)$ then has a copy of x on its $k$-th block of size $d'$, and zeros everywhere else.
+When there are few classes ($K \leq \sim 10^3$), the features we use are a block encoding of the class.
+If x are vectors of dimension $d'$, we set $d:=Kd'$. $F(x, y=k)$ then has a copy of x on its $k$-th block of size $d'$, and zeros everywhere else.
 In terms of linear model, this is the same as having one weights vector $w_k$ per class.
 For the sake of comparison, this is like a shallow neural network with no hidden layer.
 The input layer is of size $d'$.
@@ -104,9 +106,9 @@ We apply a softmax on the output layer.
 It should be noted that in general $d'$ includes a bias dimension.
 The last coordinate of each x is set to 1 (or another constant).
 The effective dimension where the x lives is $d'-1$.
-With such models, we get polygonal classification boundaries in the space $\mathcal X = \R^{d'}$.
+With such models, we get polygonal classification boundaries in the effective space $\mathcal X = \R^{d'-1}$.
 This is shown in figure \ref{linear classification} for $d'=3$.
-Only the plan $z=1$ is plotted. In the full 3d space, the decision areas are conic shapes centred on the origin.
+In the full 3d space, the decision areas are conic shapes centred on the origin.
 
 \begin{figure}[ht]
 	\label{linear classification}
@@ -114,8 +116,8 @@ Only the plan $z=1$ is plotted. In the full 3d space, the decision areas are con
 	\caption{
 	Optimal decision areas for the multinomial logistic regression.
 	The data points are drawn from a balanced gaussian mixture in dimension 2.
-	We set the bias constant to 1.
-	Areas are coloured by the prediction given by a linear model fitted on these points. 
+	We set the bias constant to 1 and plot only the plan z=1.
+	Each colour correspond to a class predicted by a linear model fitted on these points. 
 	}
 \end{figure}
 
