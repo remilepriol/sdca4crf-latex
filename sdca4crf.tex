@@ -136,7 +136,7 @@ Unfortunately, this problem is very hard.
 Since the loss is defined on a discrete space, there is no notion of continuity, even less so differentiability.
 We are left with exhaustive search approaches which are intractable.
 Hence the choice to consider the distribution probability $p( . | x ; w) \in \Delta_K$, where $\Delta_K$ denotes the simplex of dimension K.
-We replace the discrete space $\Y$ by the continuous space $\Delta_K$.
+We replace the discrete set $\Y$ by the continuous space $\Delta_K$.
 We can define continuous or differentiable functions over this space, and get a tractable optimization problem.
  
 We want our model to give the maximum probability to the observed pairs $(x_i, y_i)$.
@@ -151,7 +151,7 @@ Using the linear assumption, we expand the log-likelihood:
 \begin{equation*}
 	\min_{w\in\R^d} \frac{\lambda}{2}\|w\|^2 + \frac{1}{n}   \sum_{i=1}^{n}  \log \big (\sum_y e^{w^TF(x_i, y)} \big ) - w^TF(x_i, y_i)	
 \end{equation*}
-To write this in a more compact way, we define the corrected features $\psi_i(y)$ of a class y for the point i as the difference between the ground truth features and the features of $(x_i, y)$.
+To write this in a more compact way, we define the corrected features $\psi_i(y)$ of a class y for the sample i as the difference between the ground truth features and the features of $(x_i, y)$.
 \begin{equation*}
 	\psi_i(y)) := F(x_i, y_i) - F(x_i, y)
 \end{equation*}
@@ -173,7 +173,7 @@ Let's convince ourselves that this is a convex problem in w.
 The $l^2$ penalty is of course convex.
 The log-sum-exp is a convex function.
 One can verify that it's Hessian is a semi-definite positive matrix -- it is also $1/2$-smooth.
-We apply this convex function to a linear transformation over w.
+We apply this convex function to a linear transformation of w.
 Hence the convexity.
 The $l^2$ regularization guarantees that the function we are optimizing is at least $\lambda$ strongly convex. 
 
@@ -225,15 +225,13 @@ $\alpha$ should be interpreted as a probability density on the labels for each d
 
 \subsubsection{Optimality Condition}
 For this problem, \textbf{strong duality holds}.
-\begin{verbatim}
-https://en.wikipedia.org/wiki/Fenchel%27s_duality_theorem
-\end{verbatim} 
-\todo { What are the conditions for this. 
-In wikipedia, they only talk about the two functions situation.
-How is the proof?}
+The inequality in the derivation above is an equality.
+This is true because the $l^2$ regularization is defined on the whole space $\R^d$ and the log-sum-exp functions are continuous on their whole space as well.
 
-We look at the global optimums $(w^*,z^*,\bm\alpha^*)$.
-$(w^*,z^*)$ should be dual variables for the convex conjugates $(g,g^*)$.
+The primal problem is strongly convex, so there is only one minimum.
+Similarly, the dual problem is strongly concave, so there is only one maximum.
+We consider the global optimum $(w^*,z^*,\bm\alpha^*)$.
+$(w^*,z^*)$ should be dual variables for the convex conjugates $(g, g^*)$.
 \begin{equation*}
 	g(w^*) + g^*(z^*) - \langle w^*, z^* \rangle = \frac{\lambda}{2} \| w^* - \frac{1}{\lambda} z^* \|^2 = 0
 \end{equation*}
