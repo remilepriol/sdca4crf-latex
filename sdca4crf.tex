@@ -167,14 +167,15 @@ Hence the convexity.
 The $l^2$ regularization guarantees that the function we are optimizing is at least $\lambda$ strongly convex. 
 
 
+\paragraph{Gradients.}
 Let's notice that the gradient of the log-partition function evaluated in $-A_i^Tw$ is the conditional probability vector of the classes given x, as defined by the softmax function.
 \begin{equation}
 	\nabla \phi_i(-A_i^Tw) = (p(y | x ; w))_{y \in \Y}
 \end{equation}
-The gradient of the right hand term with respect to w is the expectation of the corrected features according to these probabilities.
+The gradient of the right hand term with respect to w is the opposite of the expectation of the corrected features according to these probabilities.
 \begin{equation}
 	\label{primal gradient}
-	\nabla_w (\phi_i(-A_i^Tw)) = \E_{y \sim p(. | x ; w)} [\psi_i(y)]
+	\nabla_w (\phi_i(-A_i^Tw)) = - \E_{y \sim p(. | x ; w)} [\psi_i(y)]
 \end{equation}
 This will prove useful in the following.
 
@@ -290,12 +291,28 @@ We inject the expression of $\alpha_i(w)$ in the entropy to find the formula:
 	\label{primal duality gap}
 	g(w,\bm \alpha(w)) = \frac{\lambda}{2} \|w-w(\alpha(w))\|^2
 \end{equation}
-This formula involves $w(\alpha(w))$. This is what the dual model created by the primal probabilities think the weights should be. 
-$w(\alpha(w))$ is actually proportional to the derivative of the partition function with respect to w (cf equation \ref{primal gradient}) :
+This formula involves $w(\alpha(w))$.
+This is what the dual model created by the primal probabilities think the weights should be. 
+
+In fact, using equation \ref{primal gradient} and \ref{dual to primal}, we can express the gradient of the primal objective 	as :
+\begin{align*}
+	\nabla \mathscr P(w) 
+	& = \lambda w + \frac{1}{n} \sum_i \nabla_w(\phi_i(-A_i^Tw)) \\
+	& = \lambda \bigg [ w - \frac{1}{\lambda n} \sum_i \E_{y \sim p(. | x ; w)} [\psi_i(y)] \bigg ] \\
+	& = \lambda [ w - w(\bm \alpha(w))]
+\end{align*}
+This means that the squared norm of the batch gradient is proportional to a duality gap.
 \begin{equation}
-	w(\bm \alpha(w)) =  \frac{1}{\lambda n} \sum_i  \E_{p(y|x ; w)} [\psi_i(y)] = -  \frac{1}{\lambda n} \sum_i \nabla_w(\phi_i(-A_i^Tw))
+	g(w,\bm \alpha(w)) = \frac{1}{2 \lambda} \|\nabla \mathscr P(w)\|^2
 \end{equation}
-\textit{Remark:} In  full batch gradient descent, the update formula for a step size $\gamma$ is  : $w^+ = (1-\gamma\lambda)w - \frac{\gamma}{n} \sum_i \nabla_w(\phi_i(-A_i^Tw))$.  For a (very large) step size $\gamma = 1/\lambda$, the update yields $\|w^+ - w(\alpha(w))\| = 0$.
+In SAG, (see \cite{schmidt_non-uniform_2015}), Marc Schmidt et al. use an estimate of the gradient of the former as a descent direction.
+They also use the norm of this estimate as a certificate to decide when to stop.
+The justification was that the gradient converges toward zero.
+If the objective is m-strongly convex there is also the bound:
+\begin{equation*}
+	\mathscr P (w) - \mathscr P(w^*) \leq \frac{1}{2 m}\|\nabla \mathscr P (w)\|^2
+\end{equation*}
+since the objective is at least $\lambda$-strongly convex we retrieve that the duality gap dominates the primal sub-optimality.
 
 \paragraph{Dual model:}
 The gap for the dual model is naturally expressed as a sum of Fenchel duality gaps between the convex conjugates $\phi_i$ and $-H_i$. 
@@ -312,7 +329,7 @@ In particular, we have $\log(\alpha_i(w)) = -A_i^Tw - \phi_i(-A_i^Tw) \1$. Since
 	g(w(\bm \alpha),\bm \alpha) = \frac{1}{n} \sum_i D_{KL} (\alpha_i || \alpha_i(w(\alpha))
 \end{equation}
 Once again, we observe a loop. Starting from the dual model, we define a primal which in turn defines a dual model.
-\textit{Remark:} Performing SDCA with a step-size $\gamma=1$ gives the update formula $\alpha_i^+ = \alpha_i(w(\alpha))$, i.e. $ D(\alpha_i^+ || \alpha_i(w(\alpha)) )=0$. 
+\textit{Remark:} Performing SDCA with a step-size $\gamma=1$ gives the update formula $\alpha_i^+ = \alpha_i(w(\alpha))$, i.e. $ D(\alpha_i^+ || \alpha_i(w(\alpha)) )=0$. (See next section).
 
 %%%%%%%%%%%%%%%%%
 \subsection{Stochastic Dual Coordinate Ascent}
@@ -321,73 +338,88 @@ In our case, the dual probabilities $\alpha_i$ are constrained to live in the si
 We have to update the variables one block at a time.
 The most natural way is to update one probability vector $\alpha_i \in \Delta_K$ altogether.
 This is what Shalev-Schwartz studied in his articles \cite{shalev-shwartz_accelerated_2013-1}.
-
-At each time step, we pick $i\in{1,..n}$ at random.
-Then $\alpha_i$ is updated so as to maximize the dual objective.
 Finding the optimal update for $\alpha_i$ is a constrained optimization problem in dimension K, which is itself difficult. 
-
-Hence the brilliant idea analyzed by Shalev-Shwartz analyzes: update $\alpha_i$ towards a sub-gradient of the primal loss $\nabla\phi_i( - A_i^Tw(\alpha)) = \alpha_i(w(\bm \alpha))$.
-This way, $\alpha_i$ is getting closer from what it should be equal to $\alpha_i(w(\bm \alpha)$, and we can guarantee that the dual gap decreases enough.
+The brilliant idea analyzed by Shalev-Shwartz is to update $\alpha_i$ towards a sub-gradient of the primal loss $\nabla\phi_i( - A_i^Tw(\alpha)) = \alpha_i(w(\bm \alpha))$.
+This way, $\alpha_i$ is getting closer from what it should be equal to $\alpha_i(w(\bm \alpha)$, and we can guarantee that the duality gap decreases enough.
 Plus, since $\Delta_K$ is convex, we are guaranteed to stay within the simplex after each step.  
-Formally, we define the ascent direction: 
-\begin{equation*}
-	d_i := \alpha_i(w(\alpha)) - \alpha_i
-\end{equation*} 
-We update:
+Formally, we define the dual ascent direction and the associated primal descent direction:
+\begin{align*}
+	d_i &:= \alpha_i(w(\alpha)) - \alpha_i \\
+	v_i &:= \frac{1}{\lambda n} A_i d_i  = \frac{1}{\lambda n} \big [ \E_{y \sim \alpha_i} [F(x_i, y)] - \E_{y \sim  \alpha_i(w(\alpha))} [F(x_i, y)] \big ]
+\end{align*} 
+The update formula is:
 \begin{equation*}
 	\alpha_i^+ \leftarrow \alpha_i + \gamma d_i = (1-\gamma)\alpha_i + \gamma \alpha_i(w(\bm \alpha)) \quad \textrm{with} \quad \gamma \in [0,1]
 \end{equation*}
-The step size $\gamma$ is either fixed, either found via a line search on the segment between $\alpha_i$ and $\alpha_i(w(\alpha))$.
+The step size $\gamma$ is either fixed, either found via a line search on the segment between $\alpha_i$ and $\alpha_i(w(\alpha))$. 
+It belongs in $[0,1]$ because we want a convex combination of $\alpha_i$ and $\alpha_i(w(\alpha))$ to remain in the simplex without further checks. 
+Most importantly, it is necessary for the proof of the linear convergence rate in \cite{shalev-shwartz_accelerated_2013-1}. 
+See algorithm \ref{sdca for logreg} for details.
 
-\paragraph{Line search }: the function of the step size we want to optimize is 
 
+\begin{algorithm}[ht]
+    \caption{SDCA for Logistic Regression}%
+    \label{sdca for logreg}
+\begin{algorithmic}
+        %
+        \STATE $\forall i,$ initialize $\alpha_i^{(0)}$ at random in $\Delta_K$
+        \STATE Let $w^{(0)} = \frac{1}{\lambda n} A \bm \alpha$  
+        \STATE Let $\forall i,\  g_i = 1$ (optional)
+        %
+       \FOR{$k=0\dots K$}
+                \STATE Pick $i$ at random in $\{1,\ldots,n\}$ (optionally, proportional to $g_i$)
+                \STATE Let $ \beta_i := p( . |x ; w^{(k)})$
+                %
+                \STATE Let $g_i = D_{KL}(\alpha_i || \beta_i)$ (optional)
+                %
+                \STATE Let $d_i = \beta_i - \alpha_i^{(k)}$ (dual ascent direction)
+                \STATE Let $v_i = \frac{1}{\lambda n} A_i d_i $ (primal descent direction)
+                \STATE Solve $\gamma^* = \argmax_{\gamma \in [0,1]} H_i(\alpha_i^{(k)} + \gamma d_i) - \frac{\lambda n}{2} \| w^{(k)} + \gamma v_i \|^2$ (Line Search)
+                %
+               \STATE Update $\alpha_i^{(k+1)} := \alpha_i^{(k)} + \gamma^* d_i$
+               \STATE Update $w^{(k+1)} := w^{(k)} + \gamma^* v_i $
+        \ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+
+\paragraph{Line search:} 
+the function of the step size we want to maximize is 
 \begin{equation}
 	\label{line search 1}
-	f_i(\gamma) = -\frac{\lambda n}{2} \|W(\alpha + \gamma d_{[i]})\|^2 + H(\alpha_i + \gamma d_i) + \cst
+	f_i(\gamma) = -\frac{\lambda n}{2} \|w + \gamma v_i\|^2 + H(\alpha_i + \gamma d_i) + \cst
 \end{equation}
-where he $d_{[i]}$ is the matrix n*K whose line i is $d_i$ and where the rest is 0.
-The first term is a quadratic function in $\gamma$.
-It can be expanded with equation \ref{primal to dual}.
-We note $\beta = Y - \alpha$ the difference between the ground truth and the dual estimation. 
-
-\begin{align*}
-	-\frac{\lambda n}{2} \|W(\alpha + \gamma d_{[i]})\|_F^2 & = -\frac{\lambda n}{2} \Tr(W(\alpha + \gamma d_{[i]}) W(\alpha + \gamma d_{[i]})^T) \\
-	& = -\frac{1}{2\lambda n} \Tr((\beta - \gamma d_{[i]})^T X X^T (\beta - \gamma d_{[i]})) \\
-	& = -\frac{1}{2\lambda n} \bigg[ \Tr(\beta X X^T \beta) - 2\gamma\Tr(\beta^TXX^Td_{[i]}) + \gamma^2 \Tr(d_{[i]}^TXX^Td_{[i]})\bigg] \\
-	& = -\frac{\lambda n}{2} \|W(\alpha)\|_F^2 + \gamma\Tr(W(\alpha)X^Td_{[i]}) - \gamma^2 \frac{\|d_i\|^2 \|x_i\|^2}{2\lambda n} \\
-	& = -\frac{\lambda n}{2} \|W(\alpha)\|_F^2 + \gamma \ d_i^T W(\alpha) x_i - \gamma^2 \frac{\|d_i\|^2 \|x_i\|^2}{2\lambda n}
-\end{align*}
-
+where $d_{[i]}$ is the matrix n*K whose line i is $d_i$ and where the rest is 0.
 We expand the first term  of \ref{line search 1} with the formulation above to highlight the quadratic dependency on $\gamma$.
-
-\begin{equation}
-	f_i(\gamma) = - \gamma^2 \frac{\|d_i\|^2 \|x_i\|^2}{2\lambda n^2} + \gamma \ d_i^T W(\alpha) x_i + H(\alpha_i + \gamma d_i) + \cst
-\end{equation} 
-
-This is indeed a concave function.
-Its derivatives are as follow.
-\begin{equation}
-	f_i'(\gamma) = - \gamma \frac{\|d_i\|^2 \|x_i\|^2}{\lambda n^2} + d_i^T W(\alpha) x_i- \sum_y d_i \log(\alpha_i + \gamma d_i)
-\end{equation}
-\begin{equation}
-	f_i''(\gamma) = - \frac{\|d_i\|^2 \|x_i\|^2}{\lambda n^2} - \sum_y \frac{d_i^2}{\alpha_i + \gamma d_i}
-\end{equation}
-
+Calculating the derivatives is straight forward.
+\begin{align*}
+	f(\gamma)
+	& = H_i(\alpha_i^{(k)} + \gamma d_i)
+	- \gamma \lambda  \langle w^{(k)} , v_i \rangle 
+	- \gamma^2 \frac{\lambda}{2n} \|v_i \|^2
+	+ \cst
+	\\
+	f'(\gamma) & =  - \langle d_i, \log(\alpha_i + \gamma d_i) \rangle
+	- \lambda  \langle w^{(k)} , v_i \rangle 
+	- \gamma \frac{\lambda}{n} \|v_i \|^2 
+	\\
+	f''(\gamma) & = - \sum_{y} \frac{d_{i}(y)^2 }{ \alpha_i(y) + \gamma d_i(y) }
+	- \frac{\lambda}{n} \|v_i \|^2 
+\end{align*}
 We can find the $2\epsilon$-approximate maximum of such a function defined on [0,1] by looking at the $\epsilon$-approximate root of its derivative on $[\epsilon,1-\epsilon]$.
 This can be done with a stabilized Newton method for instance, as described in the section 9-4 of the book \cite{press_numerical_1992}.
 
 
 %%%%%%%%%%%%
-\paragraph{Idea:} Sampling according to these individual duality gaps, i.e. sampling more often points that are more suboptimal should improve the convergence rate.
-In the article \cite{osokin_minding_2016}, the author apply a non-unform sampling scheme on the algorithm Block Coordinate Frank-Wolfe \cite{lacoste-julien_block-coordinate_2012}. 
-Their scheme is to sample proportionally to past-estimates of the individual duality gaps.
+\paragraph{Non-Uniform Sampling:} 
+In the article \cite{osokin_minding_2016}, the authors improve the empirical rate of convergence of their stochastic algorithm with non-uniform sampling.
+More precisely, they sample data points with a probability proportional to past-estimates of the individual duality gaps.
+They can apply this scheme because the algorithm Block Coordinate Frank-Wolfe \cite{lacoste-julien_block-coordinate_2012} gives an individual duality gap for free at each time step.
+To make this work, they have to perform a batch update of their duality gaps every ten epochs or so.
+
 In SDCA, we have access to duality gap $g_i$ if we pick the element i for almost no extra cost.
-Indeed each step involves computing $s_i = W x_i$ to get $\alpha_i(W(\alpha))=\nabla\phi(s_i)$.
-So we can get $\phi(s_i)$ in time $O(K)$.
-$H(\alpha_i)$ is already computed during the line search, and is done in $O(K)$ as well.
-Finally the scalar product $\langle\alpha_i, s_i\rangle$ has to be computed for a similar cost $O(K)$
-
-
+Each step involves computing $\alpha_i(W(\alpha))=\nabla\phi(s_i)$.
+Computing the KL-divergence takes a complexity $O(K)$.
 
 \subsection{Results}
 
@@ -401,9 +433,9 @@ SDCA gives proper results on synthetic gaussian mixtures datasets.
 \todo{Comparison with the other non-uniform sampling method on a real dataset?}
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CRF 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
 \section{Conditional Random Fields}
 
@@ -537,42 +569,7 @@ We call \textit{primal model}, the one where we are given \textit{primal weights
 We call \textit{dual model}, the one where we are given \textit{dual probabilities} $\alpha_i$, from which we deduce \textit{dual weights} $w(\alpha)$ as the centroid of the corrected feature vectors.
 The optimality conditions tell us that at the optimum, these two models are equal.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Duality Gaps}
-
-The duality gap $g(w,\alpha)$ is the difference between the value  of the primal problem evaluated in $w$, and the value of the dual problem evaluated in $\alpha$.
-It is interesting to look at the duality gap for both the primal model and the dual model, i.e. the duality gap between the primal weights and the primal probability, and the duality gap between the dual weights and the dual probability.
-
-\paragraph{Primal model:}
-\begin{equation}
-	g(w,\alpha(w)) = \frac{\lambda}{2} \|w-w(\alpha(w))\|^2
-\end{equation}
-In this formula appears $w(\alpha(w))$, what the dual model created by the primal probabilities think the weights should be. 
-$w(\alpha(w))$ is actually proportional to the derivative of the partition function with respect to w :
-\begin{equation}
-	w(\alpha(w)) =  \frac{1}{\lambda n} \sum_i  \E_{p(y|x ; w)} [\psi_i(y)] = - \frac{1}{\lambda} \nabla_w(\phi_i(-A_i^Tw))
-\end{equation}
-\textit{Remark:} In  full batch gradient descent, the update formula for a step size $\gamma$ is  : $w^+ = (1-\gamma\lambda)w - \gamma \nabla_w(\phi_i(-A_i^Tw))$.  For a (very large) step size $\gamma = 1/\lambda$, the update yields $\|w^+ - w(\alpha(w))\| = 0$.
-
-\paragraph{Dual model:}
-
-\begin{equation}
-	g(w(\alpha),\alpha) = \frac{1}{n} \sum_i D_{KL} (\alpha_i || \alpha_i(w(\alpha))
-\end{equation}
-Once again, we observe a loop.
-The duality gap is the Kullback-Leibler divergence between the dual probabilities, and the primal  probabilities of the primal problem created by $w(\alpha)$.
-Each of the divergence in the sum above is of course positive.
-They can be thought of as the duality gaps associated to each data point for the dual model.
-They are also equal to the Fenchel duality gap between the negative entropy and the partition function :
-\begin{equation*}
-	g_i(w,\alpha_i) = D_{KL} (\alpha_i || \alpha_i(w(\alpha)) = \phi_i(-A_i^T w) - H_i(\alpha_i) - \langle \alpha_i, -A_i^T w\rangle 
-\end{equation*}
-
-\textit{Remark:} Performing SDCA with a step-size $\gamma=1$ gives the update formula $\alpha_i^+ = \alpha_i(w(\alpha))$, i.e. $ D(\alpha_i^+ || \alpha_i(w(\alpha)) )=0$. 
-
-\paragraph{Idea:} Sampling according to these individual duality gaps, i.e. sampling more often points that are more suboptimal should improve the convergence rate.
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Marginalization}
 
 Taking the raw dual problem is intractable.
