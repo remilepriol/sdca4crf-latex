@@ -645,9 +645,17 @@ A solution would be to initialize the weights randomly, and then to do a full ba
 This is the same cost as running SDCA over the whole dataset once.
 A simpler and more economical solution is probably to initialize the marginals to uniform distributions.
 That means starting with the highest entropy possible and with a very low data fitting.
+
 Another solution would be to initialize the marginals with the empirical marginals.
 That means starting with a dual score equal to zero : lowest entropy and highest data fitting.
-\todo{Why exactly don't I start with the empirical distribution? Stability issue in the entropy and the KL? Point that is not in the interior of the simplex?}
+The problem is that the gradient of the entropy is not defined on the boundary of the simplex.
+Our algorithm is meant to evolve in the interior of the simplex. 
+This is in contrast with the Structured SVM setting where the optimal probabilities are sparse \cite{lacoste-julien_block-coordinate_2012}.
+They lie on borders of the simplex.
+The uniform marginals is central to the simplex.
+It is also the probability given by the weight vector zero : $\mu_{\textrm{uniform}} = p(. |x ; w=0)$.
+The weight vector zero is also a sensitive initialization when one look at the primal problem.
+
 Note that the computation of $w^{(0)}$ can usually be done very efficiently for a uniform marginal.
 It does not suffer a $O(n\ d\ \mathcal U)$ complexity.
 For the empirical marginals, it is even simpler: $w^{(0)}=0$.
