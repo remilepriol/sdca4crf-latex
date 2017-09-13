@@ -444,23 +444,25 @@ SDCA gives good results on synthetic gaussian mixtures datasets.
 \todo{Comparison with the other non-uniform sampling method on a real dataset?}
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CRF 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
 \section{Conditional Random Fields}
 
 \subsection{Structured Prediction}
 
+\paragraph{What is it?}
 Structured prediction is a category of multi-class classification problems.
 The particularity is that we have information about the structure of the classes.
 For instance we would like to identify a word of length T from T images of letters, and we know that there is a chain structure on these letters (OCR \todo{put citation   here}).
 Or we could parse sentences and we know that there is a natural tree structure defined by the grammar.
 Another typical instance is semantic segmentation in images : we know a priori that boundaries between objects should be sharp and that objects are usually connected areas.
-Let's write x for the input data point and y for the output class that lives in $\Y_x$.
-We index $x$ to $\Y$ because the space of classes can depend on $x$.
+We keep the same notations as before.
+The difference is that now, for an input x, the label y will live in $\Y_x$ that depends on x.
 For instance, the word we predict will have as many letters as we have images, and the semantic segmentation will be an image of the same size as the input image. 
 
+\paragraph{Motivation.}
 Compared to standard multi-class classification, we need to exploit the structure because the output space $\Y_x$ has a size that is typically exponential in the size of the input x.
 Even for prediction, a brute force approach listing the probabilities class by class and taking the max is intractable.
 The structure generally allows us to explore the space of classes in a clever way, to compute the mode of this distribution or the marginal probabilities on some part of the structure.
@@ -469,41 +471,31 @@ They are black boxes for the optimization algorithm, hence the name oracle.
 They generally take time.
 The performance of a structured prediction algorithm is generally measured by the number of oracle calls.
 In reality, marginalization oracle are often slower than maximization oracle, and there are a number of operations besides these oracles.
-Yet the number of oracle call gives a good idea of the overall complexity of an algorithm.
+However the number of oracle call is a simple and relevant estimation of the overall complexity.
 
-Formally, for any pair (input, output) we want to define a structured score $s_w(x, y)$ parametrized by a vector w.
-This score should represent the confidence that we have that the point x belongs to the class y through the equation $p(y|x ; w)\propto \exp(s_w(x, y))$.
-Physically, the score  is thus the opposite of the energy of the state y for the system x. 
-\begin{equation}
-	p(y|x; w)=  \frac{e^{s_w(x, y)}}{\sum_{y'} e^{s_w(x, y')}}
-\end{equation}
-
-In the following, we assume that we have a feature extractor for pairs $x, y \mapsto F(x, y) \in \R^d$, either handcrafted or pre-trained.
-Our score will be a linear combination of these features.
-We call the parameter w \textit{the weights}.
-\begin{equation}
-	s_w(x, y) = \langle w, F(x, y) \rangle
-\end{equation}
-
-We consider output spaces specified by undirected graphical models, aka Markov Random Fields.
-The output y is a random variable that factors over the graph $G=(V,E)$.
-Formally, this means that the joint probability over y can be factorized into potentials over the maximal cliques of the graph.
-We denote the $\mathcal{C}$ the set of maximal cliques of G, and $\mathcal{S}$ the set of separations between these cliques.
-
-\begin{align*}
-	p(y|x ; w) & \propto  \exp(s_w(x, y) \\
-	& \propto \prod_{c\in \mathcal{C}} \exp(s_{w, c}(x, y_c))\\
-	& \propto  \prod_{c\in \mathcal{C}} \exp(\langle w, F_c(x, y_c) \rangle) \\
-	& \propto \exp( \langle w, \sum_{c\in \mathcal{C}} F_c(x, y_c) \rangle 
-\end{align*}
-We go from the second to the third line by assuming that the score of each clique is itself linear.
-The consequence of these derivations is that if y factors over a graph, we want the features to be separable the same way :
+\paragraph{What kind of structure?}
+We consider an undirected graph $G=(V,E)$.
+We denote $\mathcal{C}$ the set of cliques of G.
+We make the assumption that the feature extractor is separable over the cliques of that graph.
 \begin{equation}
 	F(x, y) =  \sum_{c\in \mathcal{C}} F_c(x, y_c)
 \end{equation}
+where we have clique feature extractors $F_c$.
+The direct consequence is that the distribution $p(. | x ; w)$ will be Markov with respect to G.
+It can be written as a product of potentials defined over the cliques of G.
+\begin{align*}
+	p(y|x ; w)
+	& = \frac{1}{Z(x)} \exp(w^TF(x, y)) \\
+	& = \frac{1}{Z(x)} \exp( \sum_{c \in \mathcal{C}} w^T F_c(x, y_c))\\
+	& = \frac{1}{Z(x)} \prod_{c \in \mathcal{C}} \exp(w^TF_c(x, y_c))
+\end{align*}
+For a given x, its label y can be seen as a random variable whose distribution respect the Markov Random Field G.
+This is the formal meaning of "labels have a structure".
 
 
-\subsection{Maximum Likelihood}
+\paragraph{Objectives.}
+We have the same maximum likelihood objective as in the unstructured case.
+The dual problem is the same, and the duality gaps are the same. 
 
 We have a set of n pairs $(x_i, y_i) \in \mathcal{X} \times \Y_i$ independently sampled.
 We also have a feature extractor that maps these pairs to $\R^d$.
