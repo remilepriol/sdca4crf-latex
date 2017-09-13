@@ -37,7 +37,7 @@
 \maketitle
 
 \section*{Introduction}
-In his paper \cite{shalev-shwartz_accelerated_2013-1}, Shalev-Shwartz describes and analyze a version of the Stochastic Dual Coordinate Ascent (SDCA) algorithm for multi-class classification problems.
+In his paper \cite{shalev-shwartz_accelerated_2013-1}, Shalev-Shwartz describes and analyzes a version of the Stochastic Dual Coordinate Ascent (SDCA) algorithm for multi-class classification problems.
 He proves that SDCA has a linear convergence rate for these problems when the loss-functions are smooth.
 We apply SDCA on the $l^2$ regularized negative log-likelihood minimization. 
 The dual problem is the minimization of a squared distance regularized by the entropy.
@@ -131,9 +131,9 @@ In the full 3d space, the decision areas are conic shapes centred on the origin.
 
 We want to fit our linear model to the observed samples $(x_i, y_i)$.
 This means minimizing an empirical loss:
-\begin{equation}
+\begin{equation*}
 	\min_w \sum_{y=1}^K \mathcal L (h_w(x_i),y_i)
-\end{equation}
+\end{equation*}
 where $\mathcal L: \Y \times \Y \rightarrow \R_+$ is a loss between labels.
 A typical example is the 0-1 loss $\mathcal L(y, y') : = \1_{y=y'}$.
 Unfortunately, this problem is very hard.
@@ -194,9 +194,8 @@ The gradient of the right hand term with respect to w is the opposite of the exp
 \end{equation}
 This will prove useful in the following.
 
-
-
 \section{Background}
+The problem \ref{primal problem} has been studied for a long time.
 
 
 
@@ -228,10 +227,10 @@ Its domain is $\Delta_i$ the simplex of dimension $|\Y_i|$.
 \begin{equation}
 	-\phi_i^*(\alpha_i) = H_i(\alpha_i) := - \sum_{y \in \Y_i} \alpha_i(y) \log(\alpha_i(y))
 \end{equation}
-Finally we get the canonical dual formulation for the maximum likelihood:
-\begin{equation}
+Finally we get the dual problem of (\ref{primal problem}) in a closed form:
+\begin{equation*}
 	\max_{\alpha | \forall i, \alpha_i \in \Delta_i} \mathscr{D}(\alpha) = -\frac{1}{2\lambda} \| \frac{1}{n} \sum_i A_i \alpha_i \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
-\end{equation}
+\end{equation*}
 $\alpha$ is a vector of length $\sum_i |\Y_i|$.
 Each of its n blocks live in the simplex.
 $\alpha_i$ should be interpreted as a probability density on the labels for sample i.
@@ -257,7 +256,7 @@ Consequently, we define the dual weights, or primal parameter associated to $\al
 	\label{dual to primal}
 	\bm w(\alpha) =   \frac{1}{\lambda n} \sum_i A_i \alpha_i
 \end{equation}
-The dual problem becomes:
+These dual weights appear naturally in the dual problem. We use them to write the canonical expression of the dual problem.
 \begin{equation}
 	\label{dual problem}
 	\max_{\alpha | \forall i, \alpha_i \in \Delta_i} -\frac{\lambda}{2} \| \bm w(\alpha) \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
@@ -409,12 +408,12 @@ See algorithm \ref{sdca for logreg} for details.
 
 \paragraph{Line search:} 
 the function of the step size we want to maximize is 
-\begin{equation}
+\begin{equation*}
 	\label{line search 1}
 	f_i(\gamma) = -\frac{\lambda n}{2} \|w + \gamma v_i\|^2 + H(\alpha_i + \gamma d_i) + \cst
-\end{equation}
+\end{equation*}
 where $d_{[i]}$ is the matrix n*K whose line i is $d_i$ and where the rest is 0.
-We expand the first term in equation \ref{line search 1} with the formulation above to highlight the quadratic dependency on $\gamma$.
+We expand the first term to highlight the quadratic dependency on $\gamma$.
 Calculating the derivatives is straight forward.
 \begin{align*}
 	f(\gamma)
@@ -613,7 +612,7 @@ Equation \ref{joint from marginals} allows us to translate the entropy and the K
 \paragraph{Dual Objective.}
 With equations \ref{marginals to primal} and \ref{marginals entropy} we can express the dual problem as a maximization over the marginals.
 \begin{equation}
-	\max_{\forall i \forall c, \mu_{i, c} \in \Delta_{|c|} } - \frac{\lambda}{2} \|w(\mu)\|^2 + \frac{1}{n} \sum_i \mathcal H _ i(\mu)
+	\max_{\forall i \forall c, \mu_{i, c} \in \Delta_{|c|} } - \frac{\lambda}{2} \| \mathcal W(\mu)\|^2 + \frac{1}{n} \sum_i \mathcal H _ i(\mu)
 \end{equation}
 Equation \ref{marginals divergence} even allow us to compute duality gaps.
 When we replace the joint $\alpha_i$ with the marginal $\mu_i$, we go from a size $|\Y_i|$, to a size $\mathcal U_i := \sum_{c \in \mathcal C_i} |\Y_c|$.
@@ -716,6 +715,9 @@ We write $\mathcal U_i = \sum_c |\Y_c|$. The complexity of the other parts of th
 	\item Primal descent direction $O(d \ \mathcal U_i)$, although there are ways to make it faster, depending on the structure of the features.
 	\item Function estimation in the Line Search $O(\mathcal U_i)$
 \end{itemize}
+
+\subsection{Results}
+The algorithm is not working yet. 
 
 \bibliographystyle{plain}
 \bibliography{optimization.bib}
