@@ -208,7 +208,7 @@ The Fenchel dual associated to this problem is derived as follows :
 \begin{align*}
 	 \min_w \ f(w) + \frac{1}{n} \sum_i \phi_i(- A_i^T w) & = \min_w \ \max_{z\in \dom g^*} z^Tw - g^*(z) + \frac{1}{n} \sum_i \max_{\alpha_i \in \dom \phi_i^*} \alpha_i^T (-A_i^T w) - \phi_i^*(\alpha_i) \\
 	 	& \geq \max_{z, \alpha} \  \min_w w^T(z - \frac{1}{n} \sum_i A_i \alpha_i) - g^*(z) - \frac{1}{n} \sum_i \phi_i^*(\alpha_i) \\
-		& =  \max_{\alpha} \   - g^*(\frac{1}{n} \sum_i A_i \alpha_i) + \frac{1}{n} \sum_i -\phi_i^*(\alpha_i) \quad \textrm{if} \quad z= \frac{1}{n} \sum_i A_i^T \alpha_i \quad , -\infty \textrm{ otherwise.}\\
+		& =  \max_{\alpha} \   - g^*(\frac{1}{n} \sum_i A_i \alpha_i) + \frac{1}{n} \sum_i -\phi_i^*(\alpha_i) \quad \textrm{if} \quad z= \frac{1}{n} \sum_i A_i \alpha_i \quad , -\infty \textrm{ otherwise.}\\
 \end{align*}
 When $g$ is the $l^2$ regularization, the convex conjugate is $g^*: z \mapsto \frac{1}{2\lambda}\|z\|^2$, with domain $\R^d$.
 The convex conjugate of the log-sum-exp is the negative entropy. 
@@ -218,10 +218,11 @@ Its domain is $\Delta_i$ the simplex of dimension $|\Y_i|$.
 \end{equation}
 Finally we get the canonical dual formulation for the maximum likelihood:
 \begin{equation}
-	\max_{\alpha | \forall i, \alpha_i \in \Delta_i} \mathscr{D}(\alpha) = -\frac{1}{2\lambda} \| \frac{1}{n} \sum_i A_i^T \alpha_i \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
+	\max_{\alpha | \forall i, \alpha_i \in \Delta_i} \mathscr{D}(\alpha) = -\frac{1}{2\lambda} \| \frac{1}{n} \sum_i A_i \alpha_i \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
 \end{equation}
-$\alpha$ is a n*K matrix whose lines live in the simplex.
-$\alpha$ should be interpreted as a probability density on the labels for each data point.
+$\alpha$ is a vector of length $\sum_i |\Y_i|$.
+Each of its n blocks live in the simplex.
+$\alpha_i$ should be interpreted as a probability density on the labels for sample i.
 
 \subsubsection{Optimality Condition}
 For this problem, \textbf{strong duality holds}.
@@ -237,12 +238,12 @@ $(w^*,z^*)$ should be dual variables for the convex conjugates $(g, g^*)$.
 \end{equation*}
 Hence the optimality condition:
 \begin{equation*}
-	w^* = 	\frac{1}{\lambda} z^* =  \frac{1}{\lambda n} \sum_i A_i^T \alpha_i^*
+	w^* = 	\frac{1}{\lambda} z^* =  \frac{1}{\lambda n} \sum_i A_i \alpha_i^*
 \end{equation*}
 Consequently, we define the dual weights, or primal parameter associated to $\alpha$, written with a bold $\bm w$.
 \begin{equation}
 	\label{dual to primal}
-	\bm w(\alpha) =   \frac{1}{\lambda n} \sum_i A_i^T \alpha_i
+	\bm w(\alpha) =   \frac{1}{\lambda n} \sum_i A_i \alpha_i
 \end{equation}
 The dual problem becomes:
 \begin{equation}
@@ -304,7 +305,6 @@ We inject the expression of $\bm \alpha_i(w)$ in the entropy to find the formula
 \end{equation}
 This formula involves $\bm w(\bm \alpha(w))$.
 This is what the dual model created by the primal probabilities think the weights should be. 
-
 In fact, using equation \ref{primal gradient} and \ref{dual to primal}, we can express the gradient of the primal objective 	as :
 \begin{align*}
 	\nabla \mathscr P(w) 
@@ -434,7 +434,7 @@ Computing the KL-divergence takes a complexity $O(K)$.
 
 \subsection{Results}
 
-SDCA gives good results on synthetic gaussian mixtures datasets. 
+SDCA gives good results on synthetic gaussian mixtures. 
 \begin{figure}[ht]
 	\label{gmm results}
 	\includegraphics[width=\textwidth]{images/nonuniform_is_better.pdf}
@@ -476,6 +476,7 @@ However the number of oracle call is a simple and relevant estimation of the ove
 \paragraph{What kind of structure?}
 We consider an undirected graph $G=(V,E)$.
 We denote $\mathcal{C}$ the set of cliques of G.
+For a given label $y$ and a subset of vertices $s \subseteq V$, we denote $y_c$ the part of $y$ supported by these vertices.
 We make the assumption that the feature extractor is separable over the cliques of that graph.
 \begin{equation}
 	F(x, y) =  \sum_{c\in \mathcal{C}} F_c(x, y_c)
@@ -495,68 +496,94 @@ This is the formal meaning of "labels have a structure".
 
 \paragraph{Objectives.}
 We have the same maximum likelihood objective as in the unstructured case.
-The dual problem is the same, and the duality gaps are the same. 
+The dual problem is the same, and the duality gaps are the same.
+The difference is that the dual variable, which is a concatenation of joint probabilities, is now too large to be manipulated.
 
 \subsection{Marginalization}
-
-Taking the raw dual problem is intractable.
-The variable $\alpha$ itself is a priori too big to fit in memory : for each data point, it stores a probability vector that is exponential in the size of this data point.
+The raw dual problem is intractable.
+The variable $\alpha$ is a priori too big to fit in memory : for each data point, it stores a probability vector whose length is exponential in the size of this data point.
 This is where the structure comes into play.
-We assume that the output class y factors over a triangulated Markov random field $G=(V,E)$ with a junction tree $T=(\mathcal{C},\mathcal{S})$.
-Then the joint probability $\alpha(y)$ can be written as a function of its marginals $\mu$.
-We keep the notation $\mathcal{C}$ for the set of maximal cliques of G, and $\mathcal{S}$ the set of separations between these cliques along a junction tree.
-The marginal over a set of nodes $s$, is given by $\mu_s(y_s) = \sum_{y' | y_s'=y_s} \alpha(y)$. 
+
+\paragraph{Marginals.}
+We define the marginal of $\alpha_i$ on the clique $c \in \mathcal C_i$.
+\begin{equation}
+	\label{marginals definition}
+	\mu_{i, c}(y_c) := \sum_{y'\in \Y_i | y_c' = y_{i, c}} \alpha_i(y')
+\end{equation}
+The transformation from $\alpha$ to $\mu$ is linear.
+We define $\mu_i \in \prod_c \Delta_|c|$ the concatenation of all the clique marginal vectors for the sample i.
+We write $MI$ the marginalization operator for sample i.
+It is a matrix of size $\sum_{c \in \mathcal C_i} |\Y_c| \times |\Y_i |$.
+The line $(c, y_c)$ of $M_i$ has a one on the columns $y'$ so that $y_c'=y_c$, and zeros everywhere else.
+The column $y$ of $M_i$ has $|\mathcal C|$ ones, located on the lines $(c, y_c)$.
+The vectorial form of equation \ref{marginals definition} is:
+\begin{equation*}
+	\mu_i = M_i \alpha_i
+\end{equation*}
+We define a global $\mu$ the concatenation fo all the $\mu_i$.
+The global marginalization operator $M$ is a block diagonal matrix whose i-th block is $M_i$.
+\begin{equation}
+	\label{marginals vectorial}
+	\mu = M \alpha
+\end{equation} 
+
+\paragraph{Feature centroids.}
+Because the features are separable, we can write the dual weights as a function of the marginals :
+\begin{align*}
+	\E_{y \sim \alpha_i}[\psi_i(y)]
+   	&  = \sum_{c \in \mathcal C_i} \E_{y \sim \alpha_i}  [\psi_{i, c}(y_c)]  \\
+   	&  = \sum_{c \in \mathcal C_i} \E_{y_c \sim \mu_{i, c}}  [\psi_{i, c}(y_c)] 
+\end{align*}
+As we have done with $\bm w(\alpha)$, we can write this with vectors..
+Let  $B_i$ be the matrix of size $d \times  \sum_{c \in \mathcal C_i} |\Y_c|$, whose column $(c, y_c)$ is $\psi_{i, c}(y_c)$.
+\begin{equation*}
+	 \E_{\alpha_i}[\psi_i] = B_i \mu_i
+\end{equation*}
+The dual weights are defined in equation \ref{dual to primal} as function of the joints. We can now express them as a function of the marginals.
+\begin{align*}
+	\bm w (\alpha)
+	& =\frac{1}{\lambda n} \sum_i \E_{y \sim \alpha_i}[\psi_i(y)] \\
+	& = \frac{1}{\lambda n} \sum_i B_i \mu_i
+\end{align*}
+Let $B$ be the horizontal concatenation of all the $B_i$. We write the function that gives the dual weights from the marginals with a calligraphic $\mathcal W$.
+\begin{equation}
+	\label{marginals to primal}
+	\mathcal W (\mu) := \frac{1}{\lambda n} B \mu
+\end{equation}
+\textit{Remark:} one can verify that more generally, $A=BM$.
+
+\paragraph{Junction Tree.}
+We assume that the graph $G=(V,E)$ has a junction tree $T=(\mathcal C_{max},\mathcal{S})$.
+$\mathcal C_{max} \subset \mathcal C $ is the set of maximal cliques of G.
+$\mathcal S$ is a set of separations (= intersection) of these cliques, that defines the tree $T$.
+Under this assumption, the joint probability $\alpha_i(y)$ can be written as a function of its marginals $\mu_{i,c}$.
 \begin{equation}
 	\label{joint from marginals}
-	\alpha(y) = \frac{\prod_{c\in\mathcal{C}} \mu_c(y_c)}{\prod_{s\in\mathcal{S}} \mu_s(y_s)}
+	\alpha(y) = \frac{\prod_{c\in\mathcal{C}_{max}} \mu_c(y_c)}{\prod_{s\in\mathcal{S}} \mu_s(y_s)}
 \end{equation}
-
-$\mu$ should be thought of as the marginals over the cliques only.
-The $\mu_s$ are a byproduct of these.
-When we go from the joint $\alpha_i$ to the marginal $\mu_i$, we go from a size $\Y_i$, to a size $\sum_{c \in \mathcal C_i} |\Y_c|$.
-If each component of y can take K values, then we go from $K^{|V_i|}$ to $\sum_{c \in \mathcal C_i} K^{|c|}$ which should be considerably smaller.
-The formula \ref{joint from marginals} make sense as long as the marginals on the maximal cliques are coherent, meaning that they agree about the values of the marginals on the separations.
+This formula make sense as long as the marginals on the maximal cliques are coherent, meaning that they agree about the values of the marginals on the separations.
 Our algorithm will make sure that this coherence is preserved at each step.
-\ref{joint from marginals} allows us to translate each of the functions previously seen with the joint, in functions of the marginals.
-First the entropy and the Kullback-Leibler divergence.
-
-\begin{equation}
-	H_{|\Y|} (\alpha) = \sum_c H_{|c|}(\mu_c) - \sum_s H_{|s|}(\mu_s) =: \mathcal H (\mu) 
-	\label{marginals entropy}
-\end{equation}
-\begin{equation}
-	D(\alpha||\alpha') = \sum_c D(\mu_c||\mu_c') - \sum_s D(\mu_s||\mu_s') =: \mathcal D (\mu||\mu')
-\end{equation}
-
-We can also write the dual weights as a function of the marginals :
-
-\begin{align*}
-	   \E_{\alpha_i}[\psi_i]
-   & = \sum_{y \in \Y_i} \alpha_i(y) \psi_i(y)  \\
-   &  = \sum_{c \in \mathcal C_i} \sum_{y \in \Y_i}  \alpha_i(y)  \psi_{i, c}(y_c)  \\
-   & = \sum_{c \in \mathcal C_i}\sum_{y_c \in  \Y_c} \bigg ( \sum_{y'| y'_c = y_c } \alpha_i(y') \bigg ) \psi_{i, c}(y_c) \\
-   & = \sum_{c \in \mathcal C_i}\sum_{y_c \in \Y_c} \mu_{i, c}(y_c)  \psi_{i, c}(y)
-\end{align*}
-
-As we have done with $w(\alpha)$, we can reformulate this.
-Let  $B_i$ be the matrix of size $d \times  \sum_{c \in \mathcal C_i} |\Y_c|$, whose columns are the $\psi_{i, c}(y)$.
-Let $B$ be the horizontal concatenation of the $B_i$.
-Let $\mu$ be the vector containing all the $\mu_i$.
-
+Equation \ref{joint from marginals} allows us to translate the entropy and the Kullback-Leibler divergence of joint probabilities as functions of their marginals. We write these new functions with calligraphic letters.
 \begin{align}
-	w (\mu)
-	& =\frac{1}{\lambda n} \sum_i \sum_{c \in \mathcal C_i} \E_{\mu_i}[\psi_{i, c}] \\
-	& = \frac{1}{\lambda} B\mu \label{marginals to primal}
+	\label{marginals entropy}
+	\mathcal H (\mu) := H_{|\Y|} (\alpha) & = \sum_c H_{|c|}(\mu_c) - \sum_s H_{|s|}(\mu_s) \\
+	\label{marginals divergence}
+	\mathcal D (\mu||\mu') := D(\alpha||\alpha') & = \sum_c D(\mu_c||\mu_c') - \sum_s D(\mu_s||\mu_s')
 \end{align}
 
-With equations \ref{marginals entropy} and \ref{marginals to primal} we can write the dual problem as a maximization over the marginals.
+
+\paragraph{Dual Objective.}
+With equations \ref{marginals to primal} and \ref{marginals entropy} we can express the dual problem as a maximization over the marginals.
 \begin{equation}
 	\max_{\forall i \forall c, \mu_{i, c} \in \Delta_{|c|} } - \frac{\lambda}{2} \|w(\mu)\|^2 + \frac{1}{n} \sum_i \mathcal H _ i(\mu)
 \end{equation}
+Equation \ref{marginals divergence} even allow us to compute duality gaps.
+When we replace the joint $\alpha_i$ with the marginal $\mu_i$, we go from a size $\Y_i$, to a size $\sum_{c \in \mathcal C_i} |\Y_c|$.
+If each component of y can take $K=26$ values, and the typical word length is 7, as in the OCR dataset, then we go from $K^T \sim 10^{10}$ to $\sum_{c \in \mathcal C_i} K^{|c|} \sim 10^3$.
+We replace a problem that is intractable with a problem that is tractable.
 
 \subsection{SDCA}
-
-As we have seen in the introduction about structured prediction, the separation of the feature vectors is equivalent to the factorisation of the primal probabilities.
+As we have seen in the introduction about structured prediction, the separation of the feature vectors is equivalent to the factorization of the primal probabilities.
 We can get the primal marginals with a marginalization oracle, such as message passing on a junction tree. 
 
 \begin{algorithm}[ht]
