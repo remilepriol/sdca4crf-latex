@@ -37,13 +37,14 @@
 \maketitle
 
 \section*{Introduction}
-
-We apply the Stochastic Dual Coordinate Ascent (SDCA) algorithm to multi-class classification problems.
-These problems are formulated as $l^2$ regularized negative log-likelihood minimization. 
-We consider their dual : an entropy regularized centroid mean square error.
+In his paper \cite{shalev-shwartz_accelerated_2013-1}, Shalev-Shwartz describes and analyze a version of the Stochastic Dual Coordinate Ascent (SDCA) algorithm for multi-class classification problems.
+He proves that SDCA has a linear convergence rate for these problems when the loss-functions are smooth.
+We apply SDCA on the $l^2$ regularized negative log-likelihood minimization. 
+The dual problem is the minimization of a squared distance regularized by the entropy.
 SDCA update coordinates of the dual variable, one at a time or block by block, so as to raise the dual score.
   
-First we focus on problems with a small number of classes for which SDCA's application is straight forward.
+First we focus on problems with a small number of classes.
+For such problems, SDCA's application is straight forward from \cite{shalev-shwartz_accelerated_2013-1}.
 This is the framework of multinomial logistic regression.
 Then we elaborate the theory for structured prediction problems.
 In structured prediction, each class or label is a structured object.
@@ -63,15 +64,17 @@ We use these marginals as a new variable.
 
 We test SDCA on synthetic mixtures of gaussians for the logistic regression, and on the OCR data set for the CRF.
 
+\clearpage
 \tableofcontents
+\clearpage
 
-\section{Multiclass Logistic Regression}
+\section{Conditonnal Random Fields}
 
 \subsection{Linear Models}
 
 We consider the classical supervised learning setting.
 We observe n data points $x_i \in \mathcal{X}$, with their labels $y_i\in \Y_i:= \{1,..,K\}$, for $i \in {1,..,n}$.
-We index i to $\Y$ in order to be consistent with the second part on CRF, where the label space depends on the input $x_i$.
+We index i to $\Y$ in order to be consistent with the structured part where the label space $\Y$ depends on the input $x_i$.
 Similarly, we will index i to every function whose domain of definition depend on the sample i.
 We assume that the pairs $(x_i, y_i)$ are sampled independently and are identically distributed (i.i.d hypothesis).
 Given a new vector $x$, we want to predict the corresponding label $y$. 
@@ -95,6 +98,7 @@ We apply the softmax on these scores to get a probability vector.
 \end{equation}
 
 When there are few classes ($K \leq \sim 10^3$), the features we use are a block encoding of the class.
+This is what is commonly called \textbf{multinomial logistic regression}.
 If x are vectors of dimension $d'$, we set $d:=Kd'$. $F(x, y=k)$ then has a copy of x on its $k$-th block of size $d'$, and zeros everywhere else.
 In terms of linear model, this is the same as having one weights vector $w_k$ per class.
 For the sake of comparison, this is like a shallow neural network with no hidden layer.
@@ -192,9 +196,17 @@ This will prove useful in the following.
 
 
 
+\section{Background}
+
+
+
+
+
+\section{SDCA for Single Node Models}
+
 \subsection{Dual Formulation}
 
-As any convex problem, the logistic regression admits dual formulations.
+As any convex problem, the maximum-likelihood admits dual formulations.
 In this case, as the problem is unconstrained, we use Fenchel duality theorem to get a dual formulation.
 
 \subsubsection{Derivation}
@@ -370,7 +382,7 @@ See algorithm \ref{sdca for logreg} for details.
 
 
 \begin{algorithm}[ht]
-    \caption{SDCA for Logistic Regression}%
+    \caption{SDCA for Single Node Models}%
     \label{sdca for logreg}
 \begin{algorithmic}
         %
@@ -472,7 +484,7 @@ SDCA gives good results on synthetic gaussian mixtures.
 % CRF 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
-\section{Conditional Random Fields}
+\section{SDCA for Structured Models}
 
 \subsection{Structured Prediction}
 
@@ -608,7 +620,7 @@ When we replace the joint $\alpha_i$ with the marginal $\mu_i$, we go from a siz
 If each component of y can take $K=26$ values, and the typical word length is 7, as in the OCR dataset, then we go from $K^T \sim 10^{10}$ to $\sum_{c \in \mathcal C_i} K^{|c|} \sim 10^3$.
 We replace a problem that is intractable with a problem that is tractable.
 
-\subsection{SDCA}
+\subsection{Stochastic Dual Coordinate Ascent}
 SDCA will now update the marginal probabilities $\mu_i$ instead of the $\alpha_i$. 
 There are few consequences to this marginalization.
 The main one is that we have to call a marginalization oracle to get the marginals from the weights.
