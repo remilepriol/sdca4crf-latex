@@ -422,15 +422,27 @@ We compute $\langle w^{(k)} , v_i \rangle$ and $ \|v_i \|^2$ once and for all at
 We can find the $2\epsilon$-approximate maximum of $f'$ defined on ]0,1[ by looking at its $\epsilon$-approximate root on $[\epsilon,1-\epsilon]$.
 This can be done with a stabilized Newton method for instance, as described in the section 9-4 of the book \cite{press_numerical_1992}.
 
-\paragraph{Non-Uniform Sampling:} 
+
+\paragraph{Non-Uniform Sampling.} 
 In the article \cite{osokin_minding_2016}, the authors improve the empirical rate of convergence of their stochastic algorithm with non-uniform sampling.
 More precisely, they sample data points with a probability proportional to past-estimates of the individual duality gaps.
 They can apply this scheme because the algorithm Block Coordinate Frank-Wolfe \cite{lacoste-julien_block-coordinate_2012} gives an individual duality gap for free at each time step.
-To make this work, they have to perform a batch update of their duality gaps every ten epochs or so.
+A problem is that the duality gap estimates become stale as they get older.
+A data point that was not sampled in a while could have a low duality gap estimate when its real duality gap is large.
+To fight against staleness, the authors suggest performing a batch update of the duality gaps every ten epochs or so.
 
-In SDCA, we have access to duality gap $g_i$ if we pick the element i for almost no extra cost.
-Each step involves computing $\alpha_i(\bm w(\alpha))=\nabla\phi(s_i)$.
-Computing the KL-divergence takes a complexity $O(K)$.
+Another solution can be found in \cite{schmidt_non-uniform_2015}.
+The authors propose a non-uniform sampling scheme that relies on estimations of local Lipschitz constants.
+To fight staleness, they sample data point uniformly about half of the time.
+This mixed-scheme avoids a redundant pass over the data, which is not necessary for them.
+
+In SDCA, if we pick the element i, we have access to the duality gap $g_i$ for the cost $O(K)$ of computing a KL-divergence.
+We have to do a batch update every T epochs to get certificate of convergence.
+This is the opportunity to also update the sampling probabilities.
+
+The description of an algorithm to efficiently sample points proportionally to changing scores can be found in section 6.2 of \cite{nesterov_efficiency_2012}.
+The idea is to use binary search tree.
+The initialization is done in $O(n)$, the sampling in $O\log n)$ and the update of a score in $O(\log n)$.
 
 \subsection{Results}
 
@@ -556,7 +568,9 @@ Let $B$ be the horizontal concatenation of all the $B_i$. We write the function 
 We assume that the graph $G=(V,E)$ has a junction tree $T=(\mathcal C_{max},\mathcal{S})$.
 $\mathcal C_{max} \subset \mathcal C $ is the set of maximal cliques of G.
 $\mathcal S$ is a set of separations (= intersection) of these cliques, that defines the tree $T$.
-Under this assumption, the joint probability $\alpha_i(y)$ can be written as a function of its marginals $\mu_{i,c}$.
+The direct consequence is that we can run message passing on the junction tree.
+That means \textbf{we have a marginalization oracle} at hand : for any weight vector $w$ and data point $x$ we can infer the marginals $p_c(y_c |x ; w)$.
+The second consequence is that the joint probability $\alpha_i(y)$ can be written as a function of its marginals $\mu_{i, c}$.
 \begin{equation}
 	\label{joint from marginals}
 	\alpha(y) = \frac{\prod_{c\in\mathcal{C}_{max}} \mu_c(y_c)}{\prod_{s\in\mathcal{S}} \mu_s(y_s)}
@@ -578,13 +592,15 @@ With equations \ref{marginals to primal} and \ref{marginals entropy} we can expr
 	\max_{\forall i \forall c, \mu_{i, c} \in \Delta_{|c|} } - \frac{\lambda}{2} \|w(\mu)\|^2 + \frac{1}{n} \sum_i \mathcal H _ i(\mu)
 \end{equation}
 Equation \ref{marginals divergence} even allow us to compute duality gaps.
-When we replace the joint $\alpha_i$ with the marginal $\mu_i$, we go from a size $\Y_i$, to a size $\sum_{c \in \mathcal C_i} |\Y_c|$.
+When we replace the joint $\alpha_i$ with the marginal $\mu_i$, we go from a size $|\Y_i|$, to a size $\mathcal U_i := \sum_{c \in \mathcal C_i} |\Y_c|$.
 If each component of y can take $K=26$ values, and the typical word length is 7, as in the OCR dataset, then we go from $K^T \sim 10^{10}$ to $\sum_{c \in \mathcal C_i} K^{|c|} \sim 10^3$.
 We replace a problem that is intractable with a problem that is tractable.
 
 \subsection{SDCA}
-As we have seen in the introduction about structured prediction, the separation of the feature vectors is equivalent to the factorization of the primal probabilities.
-We can get the primal marginals with a marginalization oracle, such as message passing on a junction tree. 
+SDCA will now update the marginal probabilities $\mu_i$ instead of the $\alpha_i$. 
+There are few consequences to this marginalization.
+The main one is that we have to call a marginalization oracle to get the marginals from the weights.
+More generally, every function of the joint should be replaced by its marginals counterpart. 
 
 \begin{algorithm}[ht]
     \caption{SDCA for CRF}%
@@ -610,18 +626,26 @@ We can get the primal marginals with a marginalization oracle, such as message p
 \end{algorithmic}
 \end{algorithm}
 
-\paragraph{Complexity:} ascent direction in $O(\sum_c |\Y_c|)$ and primal direction in $O(d*\sum_c |\Y_c|)$.
-The line search is not too expensive.
-Each function or gradient evaluation is $O(\sum_c |\Y_c|)$.
+\paragraph{Initialization.}
+Another consequence is that we can no longer initialize the variable randomly. 
+The marginals have to be coherent on the separations of the junction tree.
+A solution would be to initialize the weights randomly, and then to do a full batch marginalization.
+This is the same cost as running SDCA over the whole dataset once.
+A simpler and more economical solution is probably to initialize the marginals to uniform distributions.
+That means starting with the highest entropy possible and with a very low data fitting.
+Another solution would be to initialize the marginals with the empirical marginals.
+That means starting with a dual score equal to zero : lowest entropy and highest data fitting.
+\todo{Why exactly don't I start with the empirical distribution? Stability issue in the entropy and the KL? Point that is not in the interior of the simplex?}
+Note that the computation of $w^{(0)}$ can usually be done very efficiently for a uniform marginal.
+It does not suffer a $O(n\ d\ \mathcal U)$ complexity.
+For the empirical marginals, it is even simpler: $w^{(0)}=0$.
 
-Note that the computation of $w^{(0)}$ can usually be hand made very efficiently.
+\paragraph{Line Search:} 
+It is mostly the same as the first line search.
+We just have to consider the right functions of the marginals.
+The marginals over the separations $\mu_{i, s}$ and $d_{i, s}$ are computed once and for all at the beginning of the line search.
+The quadratic and the linear term as well.
 
-Every T pass, do a full pas over the data to compute the true duality gap, which gives a stopping criterion.
-
-\paragraph{Line Search:} we optimize over $\gamma \in [0,1]$ because we want a convex combination of $\mu_i$ and $\nabla_i$.
-It gives us a guarantee that we stay in the simplex without any further checks.
-Plus $\gamma$ a priori has no incentives to be outside of $[0,1]$, since $\mu_i$ and $\nabla_i$ are converging towards each other.
-The marginals over the separation $\mu_{i, s}$ and $d_{i, s}$ are computed once and for all at the beginning of the line search.
 
 \begin{align*}
 	f(\gamma)
@@ -644,6 +668,22 @@ The marginals over the separation $\mu_{i, s}$ and $d_{i, s}$ are computed once 
 	- \frac{\lambda}{n} \|v_i \|^2 
 \end{align*}
 
+\paragraph{Complexity:}
+SDCA performs one and only one marginalization oracle call per step.
+This is its main advantage over its counter part, Stochastic Average Gradient with Non-Uniform Sampling \cite{schmidt_non-uniform_2015}.
+In NUS-SAG, the non-uniform sampling scheme depends on estimators of the Lipschitz constants.
+These estimators are also used to set the step size.
+They are found via a line search for which each function evaluation requires an oracle call.
+Some heuristics are used to spend less time in these line search.
+In comparison, SDCA performs exact line search at each step, with only one oracle call.
+We write $\mathcal U_i = \sum_c |\Y_c|$. The complexity of the other parts of the algorithm are:
+\begin{itemize}
+	\item Non-uniform sampling $O(\log n)$.
+	\item Duality gap estimation $O(\mathcal U_i)$
+	\item Dual ascent direction $O(\mathcal U_i)$
+	\item Primal descent direction $O(d \ \mathcal U_i)$, although there are ways to make it faster, depending on the structure of the features.
+	\item Function estimation in the Line Search $O(\mathcal U_i)$
+\end{itemize}
 
 \bibliographystyle{plain}
 \bibliography{optimization.bib}
