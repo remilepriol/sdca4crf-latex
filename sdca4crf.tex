@@ -497,38 +497,6 @@ This is the formal meaning of "labels have a structure".
 We have the same maximum likelihood objective as in the unstructured case.
 The dual problem is the same, and the duality gaps are the same. 
 
-We have a set of n pairs $(x_i, y_i) \in \mathcal{X} \times \Y_i$ independently sampled.
-We also have a feature extractor that maps these pairs to $\R^d$.
-This feature extractor is separable over graphs of the appropriate dimension corresponding to each $\Y_i$.
-The Conditional Random Field model aims at maximizing the log-likelihood of the weights $w\in \R^d$ given these samples.
-Once we have learnt the weights, we can predict the class of a new data point x by taking the mode of $p(y|x ; w)$.
-The prediction function is thus $x \mapsto \hat{y} = h_w(x) = \argmax_{y\in \Y_x} s_w(x, y)$.
-To avoid overfitting and to make the problem strongly convex, we penalize the squared $l^2$ norm of the weights.
-The variational CRF problem is written below.
-
-\begin{equation}
-\min_{w\in\R^d} f(w) = \frac{\lambda}{2}\|w\|^2 - \frac{1}{n}   \sum_{i=1}^{n} \log(p(y_i|x_i; w))	
-\end{equation}
-
-Let's expand the probability term in this formula.
-We define the corrected features $\psi_i(y)$ of a class y for the point i as the difference between the ground truth features and the features of $(x_i, y)$.
-\begin{equation}
-	\psi_i(y)) := F(x_i, y_i) - F(x_i, y)
-\end{equation}
-The negative log-likelihood then becomes the log-partition function (log-sum-exp) $\phi_i(z):=\log(\sum_{y\in \Y_i} e^{z(y)})$ over these features.
-\begin{equation}
-	- \log(p(y_i|x_i; w)) = \log \bigg ( \sum_{y \in \Y_i}  \exp(-w^T\psi_i(y)) \bigg ) = \phi_i(-A_i^Tw)	
-\end{equation}
-where $A_i$ \todo{Change the name of $A_i$ for a more typical one.
-Idem for $\phi_i$} is the $d\times |\Y_i|$ matrix whose columns are the $\psi_i(y)$ for $y \in \Y_i$.
-We index $i$ to $\phi_i$ because it affects the range of the sum.
-The closed formulation of the CRF is thus :
-
-\begin{equation}
-\min_{w\in\R^d} f(w) = \frac{\lambda}{2}\|w\|^2 + \frac{1}{n}   \sum_{i=1}^{n} \phi_i(-A_i^Tw)	
-\end{equation}
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Dual Formulation}
 
