@@ -418,10 +418,22 @@ Calculating the derivatives is straight forward.
 	f''(\gamma) & = - \sum_{y} \frac{d_{i}(y)^2 }{ \alpha_i(y) + \gamma d_i(y) }
 	- \lambda n  \|v_i \|^2 
 \end{align*}
-We compute $\langle w^{(k)} , v_i \rangle$ and $ \|v_i \|^2$ once and for all at the beginning of each line search for a cost $O(d)$. Then each function estimate has a toll $O(\|Y\|)$.\\
+We compute $\langle w^{(k)} , v_i \rangle$ and $ \|v_i \|^2$ once and for all at the beginning of each line search for a cost $O(d)$. Then each function estimate has a toll $O(\|Y\|)$.
+
 We can find the $2\epsilon$-approximate maximum of $f'$ defined on ]0,1[ by looking at its $\epsilon$-approximate root on $[\epsilon,1-\epsilon]$.
 This can be done with a stabilized Newton method for instance, as described in the section 9-4 of the book \cite{press_numerical_1992}.
 
+We have to be cautious in the manipulation of the entropy and its derivatives.
+Marginals are supposed to remain in the interior of the simplex, as a result of the softmax.
+Yet they sometimes get awfully close from zero.
+To stabilize this, we replace the marginals inside the logorithms and in the denominator by $\max(10^{-16}, \textrm{marginals})$.
+
+
+\paragraph{Certificate.}
+At each time step, we can compute the individual duality gap $g_i = D(\alpha_i || \beta_i)$ for a small cost $O(K)$.
+The mean of these gaps gives us an estimate of the duality gap.
+This can be used as a certificate to decide when to stop.
+A more reliable way is to check the true duality gap with a batch update every T epochs, or when this estimate gets low.
 
 \paragraph{Non-Uniform Sampling.} 
 In the article \cite{osokin_minding_2016}, the authors improve the empirical rate of convergence of their stochastic algorithm with non-uniform sampling.
