@@ -497,55 +497,6 @@ This is the formal meaning of "labels have a structure".
 We have the same maximum likelihood objective as in the unstructured case.
 The dual problem is the same, and the duality gaps are the same. 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Dual Formulation}
-
-We can derive a Fenchel dual to the CRF, as done in \todo{provide reference.}
-\begin{equation}
-	\max_{\alpha\in\Delta_{1} \times \dots \times \Delta_{n}} -\frac{\lambda}{2}\|w(\alpha)\| +\frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
-\end{equation}
-where $\Delta_i$ is the simplex of dimension $|\Y_i|$, meaning that $\alpha$ is a n*$|\Y_i|$ matrix whose lines live in the simplex, and $H_i$ is the entropy for distributions over $\Y_i$ : $H(\alpha_i) := - \sum_y \alpha_i(y) \log(\alpha_i(y)$.
-To simplify the notation, we omit the domain of summation for y in the sum as it can be deduced from the context.
-We define the \textit{dual weights} given by the optimality condition:
-\begin{equation*}
-	w(\alpha) = \frac{1}{\lambda n} \sum_i \sum_y \alpha_i(y) \psi_i(y) 
-\end{equation*}
-At the dual optimum $\alpha^*$, $w(\alpha^*)$ is optimum for the primal problem.
-This formula can be written in a number of ways, each time outlining some property.
-\begin{align}
-	w(\alpha) & = \frac{1}{\lambda n} A \alpha \label{linear combination of probabilities} \\
-	 & = \frac{1}{\lambda} \E_{i} [ \E_{y \sim \alpha_i} [\psi_i(y)]] \label{mean of the corrected features} \\
-	 & =   \frac{1}{\lambda} \E_{i} [F(x_i, y_i)] - \frac{1}{\lambda} \E_{i} [ \E_{y \sim \alpha_i} [F(x_i, y)]]
-	 \label{difference between ground truth and dual weights}
-\end{align}
-where A is the horizontal concatenation of the $A_i$.
-It is a matrix of size $d \times \sum_i |\Y_i|$.
-The expectations over i assume i is uniform random variable taking its values between 1 and n. 
-
-\paragraph{Interpretation :} The primal problem is a regularized maximization of the likelihood of w. 
-In the dual problem, we control directly the probabilities given to each class on the training samples.
-There is two conflicting terms.
-The first one aims at minimizing the size of the centroid of the corrected features.
-Since $\psi_i(y_i)=0$, it is minimal for the empirical distribution.
-The second term aims at maximizing the entropy of this distribution.
-It pushes the $\alpha_i$ towards a more uniform distribution.
-Thus the role of the terms is the inverse of the primal model : the data fitting term is on the left.
-It is the squared distance between the centroid of the ground truth features and the centroids predicted by the dual model.
-The entropy on the right is the regularization. 
-
-We can also derive the primal problem from the dual problem.
-We then get another optimality condition $\alpha(w^*) = \alpha*$ where $\alpha(w)$ is the density on the training set defined by the weights w in equation \ref{primal probability}.
-
-\begin{equation}
-	\forall i, \alpha_i(w) = \nabla\phi_i(-A_i^Tw) = p(.|x; w) \propto \exp(-w^T \psi_i(.))
-\end{equation}
-
-\paragraph{Naming :} 
-We call \textit{primal model}, the one where we are given \textit{primal weights} w, from which we deduce \textit{primal probabilities} $\alpha_i(w)$.
-We call \textit{dual model}, the one where we are given \textit{dual probabilities} $\alpha_i$, from which we deduce \textit{dual weights} $w(\alpha)$ as the centroid of the corrected feature vectors.
-The optimality conditions tell us that at the optimum, these two models are equal.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Marginalization}
 
 Taking the raw dual problem is intractable.
