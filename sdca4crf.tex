@@ -4,6 +4,7 @@
 \usepackage{natbib}
 
 \usepackage{graphicx}
+\usepackage{subcaption}
 \usepackage[section]{placeins}
 \usepackage{fullpage}
 \usepackage{todonotes}
@@ -837,9 +838,142 @@ We write $\mathcal U_i = \sum_c |\Y_c|$. The complexity of the other parts of th
 	\item Function estimation in the Line Search $O(\mathcal U_i)$
 \end{itemize}
 
-\subsection{Results}
+\subsection{Results on OCR}
+
+We implemented everything in Python with Numpy.
+The oracles that we need are the sum-product algorithm and the max-product algorithm on a chain.
+They both are dynamic programming algorithm that can be coded in relatively few lines.
+
+There two complicated objects in the algorithm \ref{sdca for crf} : the marginals and the features.
+We implement both of them as classes, so that applying SDCA on a  new dataset with a sequential structure will just require to implement these classes again.
 
 The algorithm is not working yet.
+There is most likely a bug.
+We provide preliminary results to show what works and what does not, and more importantly to give some insights about the algorithm itself. 
+For the reference, we include the figure \ref{schmidt's curves} drawn from \cite{schmidt_non-uniform_2015}.
+In this figure, a number of methods are compared on the OCR dataset.
+The best one is SAG-NUS* : stochastic average gradient with a mixed uniform -- non-uniform sampling scheme.
+SAG-NUS* reaches a sub-optimality $10^{-4}$ on the primal in about 100 iterations.
+
+\begin{figure}[ht]
+	\label{schmidt's curves}
+	\center
+	\includegraphics[width=.5\textwidth]{images/ocr2_train_passes.pdf}
+	\caption{Training curves for various optimization algorithms on the OCR dataset. The x axis is the number of epochs, while the y axis is the primal suboptimality.}
+\end{figure}
+
+
+Figure \ref{training crf} shows the evolution of the duality gap on a subset  of  the OCR dataset  of size $n=626$, for different values of $\lambda$.
+When $\lambda=1$ (very large), the duality gap decreases very fast towards $10^{-2.5}$, at which it stops.
+When $\lambda$ gets to smaller, more reasonable values, the algorithm gradually stop converging before increasing the duality gap.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/20170914_040237_ocr_perf.pdf}
+    \end{subfigure}
+
+    \begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/20170914_041643_ocr_perf.pdf}
+    \end{subfigure}
+
+    \begin{subfigure}[t]{\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/20170914_040715_ocr_perf.pdf}
+    \end{subfigure}
+    \caption{Training curve of SDCA on OCR for various parameters $\lambda$.}
+    \label{training crf}
+\end{figure}
+
+
+To investigate what really happens, we can look at a number of variables. 
+In figure \ref{ocr annexes}, we look at the evolution of some of them.
+On the top, there is the norm of the primal descent direction.
+Second is the inner product between the weight vector and the primal descent direction.
+A negative inner product is a good thing since we want to minimize the norm of the weight vector.
+These two variables are used in the definition of the line search.
+Both of them should converge towards zero.
+This is not true for the norm of the ascent direction, which do not converge for small values of $\lambda$.
+
+The third line of plots represent the evolution of the step sizes.
+In every instance, they tend to be high and close to 1 at the beginning.
+After a few pass, they tend to be mostly zero.
+In total, about 70\% of the samples we pick are useless (step size = 0).
+
+The fourth line is the evolution of the dual score.
+This is the score that we are directly optimizing in SDCA.
+It increases as we would expect it
+
+Finally the fifth line is the estimate of the duality gap that we get by taking the mean of the (stale) individual duality gaps.
+We observe a jump after each epoch.
+That corresponds to the full batch computation of the duality gap, resetting the estimate to its true value.
+If the algorithm was running normally, we would do that operation only every T epochs.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[t]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/20170914_040249_ocr_annex.pdf}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/20170914_041645_ocr_annex.pdf}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/20170914_040717_ocr_annex}
+    \end{subfigure}
+    \caption{Some values of interest tracked along the run of SDCA.}
+	\label{ocr annexes}
+\end{figure}
+
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[t]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/20170914_040255_ocr_stepdistrib.pdf}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/20170914_041649_ocr_stepdistrib.pdf}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/20170914_040720_ocr_stepdistrib.pdf}
+    \end{subfigure}
+    \caption{Distributions of step sizes taken by SDCA. The y axis is a log-scale. A large majority of steps are either taken with full size 1, either not taken at all. When the algorithm works better, with $\lambda$ large, there are more intermediate step sizes.}
+	\label{ocr step sizes}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[t]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/20170914_040308_ocr_optdualgaps.pdf}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/20170914_041703_ocr_optdualgaps.pdf}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/20170914_040725_ocr_optdualgaps.pdf}
+    \end{subfigure}
+    \caption{Distribution of individual duality gaps after the run of SDCA.}
+	\label{ocr duality gaps}
+\end{figure}
+
+
+
 
 
 \bibliographystyle{plain}
