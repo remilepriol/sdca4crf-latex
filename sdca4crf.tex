@@ -552,8 +552,8 @@ The formula applied to the logistic regession can be written:
 	p_i \propto \| \beta_i - \alpha_i \l \sqrt{R_i^2 + 2 \lambda n} 
 \end{equation}
 where $\beta_i$ and $\alpha_i$ are as in algorithm \ref{sdca for logreg}. 
-$R_i^2$ is the spectral norm of $A_i^TA_i$.
-We approximate it with an upper bound : $\max_y \| \psi_i(y)\|^2$.
+$R_i$ is the spectral norm of $A_i$.
+We approximate it with the lower bound : $\max_y \| \psi_i(y)\|$, which is easier to compute.
 We compare our duality gap sampling scheme to this adaptation of Csiba's sampling scheme.
 
 The description of an algorithm to efficiently sample points proportionally to changing scores can be found in section 6.2 of \cite{nesterov_efficiency_2012}.
