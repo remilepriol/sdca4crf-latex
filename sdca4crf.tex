@@ -43,9 +43,10 @@ He proves that SDCA has a linear convergence rate for these problems when the lo
 
 We apply SDCA on the $l^2$ regularized negative log-likelihood minimization.
 Given n sample $x_i \in \mathcal X$ and their labels $y_i \in \Y$, the problem we aim to solve has the form:
-\begin{equation*}
+\begin{equation}
+	\label{max likelihood}
 	 \min_{w \in \R^d} \frac{\lambda}{2}\|w\|^2 - \frac{1}{n}   \sum_{i=1}^{n} \log(p(y_i|x_i; w))
-\end{equation*}
+\end{equation}
 The minimization takes place over the weight vector w parametrizing the conditional probability of y given x. 
   
 First we focus on problems where the number of classes,$|\Y|$ is small, such as multinomial logistic regression.
@@ -78,7 +79,76 @@ We provide preliminary results.
 
 \tableofcontents
 
-\section{Conditonnal Random Fields}
+\section{Background}
+The problem \ref{max likelihood} has a long running history in the machine learning community.
+A number of approaches have been tried.
+The main difficulty is the ever-increasing number of samples n.
+In 2001, \cite{lafferty_conditional_2001} described the CRF model and proposed an iterative scaling approach.
+That was not as efficient as the generic deterministic algorithm : limited-memory memory quasi-Newton (L-BFGS, \cite{wallach_efficient_2002}, \cite{sha_shallow_2003}).
+Deterministic algorithms require performing some computation for each of the n data points at each step.
+This is not tractable for very large n.
+Researchers tried to apply stochastic methods such as the stochastic gradient descent (\cite{vishwanathan_accelerated_2006}, \cite{finkel_efficient_2008}).
+These methods have a sub-linear convergence rate.
+They take $O(1/\epsilon)$ iterations to reach precision $\epsilon$.
+This is much larger than the $O(\log(1/\epsilon))$ iterations required by deterministic methods.
+
+\paragraph{Variance Reduction.}
+This is where the variance reduction methods come into play.
+These methods achieve both a linear convergence rate, and a cheap update cost (independent of n).
+There is a trade-off though.
+They also require a memory  $O(n)$.
+Thanks to this memory these methods overcome the variance ball issue of the stochastic gradient descent.
+They get an update whose variance vanish as we get closer from the optimum.
+The family of variance reduction  include : 
+\begin{itemize}
+	\item	 Exponentiated Gradient in 2008 \cite{collins_exponentiated_2008}, developed primarily for structured prediction.
+	\item Stochastic Average Gradient (SAG) in 2012 \cite{roux_stochastic_2012}
+	\item SDCA in 2013
+	\item Stochastic Variance Reduced Gradient (SVRG) in 2014 \cite{johnson_accelerating_2013} which coined the term "variance reduced"
+	\item SAGA in 2014 \cite{defazio_saga:_2014} which showed that all these methods have the same "variance reduced" structure.  
+\end{itemize}
+
+\paragraph{Application to CRF.}
+The exponentiated gradient was meant to train CRF models.
+Its linear convergence is guaranteed only on the dual objective.
+Its empirical performance is very inconsistant, sometimes state of the art, sometimes poorer than L-BFGS or the stochastic gradient (see figure 1 in \cite{schmidt_non-uniform_2015}). 
+In 2014 \cite{schmidt_non-uniform_2015}, Schmidt adapted SAG to train CRF models.
+He got state of the art results on a number of sequence datasets, totally outperforming the exponentiated gradient and other competitors.
+Our contribution is in the direct lineage of these two works.
+SDCA is very similar to the Exponentiated Gradient.
+Both operates in the dual, but SDCA has a linear convergence rate guarantee on the duality gap.
+That makes SDCA closer from SAG in terms of theoretical guarantee.
+
+\paragraph{Non-Uniform Sampling}
+Schmidt improved SAG with a non-uniform sampling scheme.
+A variety of non-uniform sampling schemes have been proposed for SDCA, such as in \cite{csiba_stochastic_2015} which applies to binary classification.
+We propose a new approach inspired by \cite{osokin_minding_2016} to improve the Block Coordinate Franck Wolfe algorithm from \cite{lacoste-julien_block-coordinate_2012}.
+We sample proportionally to estimates of individual duality gaps.
+The assumption is that if a point has a high duality gap, we will decrease more efficiently  the overall duality gap by moving that point. 
+
+\paragraph{Convergence rates.}
+Below we reproduce a table from \cite{schmidt_non-uniform_2015}stating the convergence rates of different methods for training CRFs.
+It includes the fastest known rates for deterministic algorithms (like L-BFGS), stochastic algorithms (like [averaged] stochastic gradient), online exponentiated gradient, and SAG.
+We append SDCA to this list.
+We denote $L$ the Lipschitz constant of the gradient of the objective, $m$ the strong-convexity constant (and we have $\lambda \leq m \leq L$), and $\sigma^2$ bounds the variance of the gradients.\\
+\begin{center}
+\begin{tabular}{llc}
+Deterministic: & $O(n\sqrt{\frac{L}{m}}\log(1/\epsilon))$ & (primal)\\
+Online EG & $O((n + \frac{L}{\lambda})\log(1/\epsilon))$ & (dual)\\
+Stochastic & $O(\frac{\sigma^2}{m \epsilon}+\sqrt{\frac{L}{m \epsilon}})$ & (primal)\\
+SAG & $O((n + \frac{L}{m})\log(1/\epsilon))$ & (primal) \\
+SDCA & $O( (n + \min( \frac{L}{\lambda}, \sqrt{\frac{n L}{\lambda}}) ) \log(1/\epsilon) )$ & (duality gap)
+\end{tabular}
+\end{center}
+Compared to SAG, SDCA suffer a dependency on the regularization parameter $\lambda$ instead of $m$.
+It means that SAG can is adaptative to  hidden strong-convexity, but not SDCA.
+For large values of $\lambda$, the problem is rather well  conditioned $L/m \leq L/\lambda \leq n$.
+Then we expect SDCA to behave worse than SAG.
+On the other hand, if $\lambda$ is small and the problem is ill conditioned, SDCA may outperform SAG.
+A typical value is $\lambda=1/n$.
+Then, if $m$ is not much smaller than $\lambda$, both algorithms should be comparable.
+
+\section{Multinomial Logistic Regression}
 
 \subsection{Linear Models}
 
@@ -203,19 +273,6 @@ The gradient of the right hand term with respect to w is the opposite of the exp
 	\nabla_w (\phi_i(-A_i^Tw)) = - \E_{y \sim p(. | x_i ; w)} [\psi_i(y)]
 \end{equation}
 This will prove useful in the following.
-
-\section{Anterior Works}
-The problem \ref{primal problem} is long running.
-A number of approach has been tried.
-The difficulty arises from the high dimensionality d, and  most importantly from the number of samples n.
-In 2001, \cite{lafferty_conditional_2001} described the setting and proposed an iterative scaling approach.
-That was not as efficient as the generic deterministic algorithm : limited-memory memory quasi-Newton (L-BFGS, \cite{wallach_efficient_2002},\cite{sha_shallow_2003}).
-Deterministic algorithms require computing probabilities for the n examples. 
-
-
-
-
-\section{SDCA for Single Node Models}
 
 \subsection{Dual Formulation}
 
@@ -497,7 +554,7 @@ SDCA gives good results on synthetic gaussian mixtures.
 % CRF 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
-\section{SDCA for Structured Models}
+\section{Conditional Random Fields}
 
 \subsection{Structured Prediction}
 
