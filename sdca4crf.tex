@@ -195,12 +195,12 @@ The weight matrix W of size $K \times d'$ is the vertical concatenation of the $
 We apply a softmax on the output layer.
 
 \begin{figure}[ht]
-	\label{linear boundaries}
 	\includegraphics[width=\textwidth]{images/linear_classification.pdf}
 	\caption{Optimal decision areas for the multinomial logistic regression.
 	The data points are drawn from a balanced gaussian mixture in dimension 2.
 	We set the bias constant to 1 and plot only the plan z=1.
 	Each colour correspond to a class predicted by a linear model fitted on these points.}
+	\label{linear boundaries}
 \end{figure}
 
 It should be noted that in general $d'$ includes a bias dimension.
@@ -579,10 +579,10 @@ Csiba's sampling scheme achieves a better rate.
 
 
 \begin{figure}[ht]
-	\label{training gaussians}
 	\center
 	\includegraphics[width=.8\textwidth]{images/20170914_061831_gaussians_perf.pdf}
 	\caption{Training curves for SDCA applied to the multinomial logistic regression on a dataset of a 1000 points drawn from 6 gaussians in dimension 20. Uniform indicates uniform sampling. Gaps indicates our proposed sampling scheme. Csiba indicates the scheme described in \ref{csiba}. Mixed gaps indicates that points are sampled uniformly half of the time, and proportionally to gaps the other half. Idem for mixed csiba.}
+	\label{training gaussians}
 \end{figure}
 
 
@@ -603,10 +603,10 @@ A better empirical verification would require running this test on more datasets
 Nevertheless, a strong point of the duality gap approach is that it can be adapted effortlessly to the CRF model.
 
 \begin{figure}[ht]
-	\label{training covertype}
 	\center
 	\includegraphics[width=.8\textwidth]{images/20170914_065817_covertype_perf.pdf}
 	\caption{Training curves for SDCA applied to the multinomial logistic regression on the Covertype dataset. Uniform indicates uniform sampling. Gaps indicates our proposed sampling scheme. Csiba indicates the scheme described in \ref{csiba}. Mixed gaps indicates that points are sampled uniformly half of the time, and proportionally to gaps the other half. Idem for mixed csiba.}
+	\label{training covertype}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -865,10 +865,10 @@ The best one is SAG-NUS* : stochastic average gradient with a line search and a 
 SAG-NUS* reaches a sub-optimality of $10^{-4}$ on the primal in about a 100 iterations.
 
 \begin{figure}[ht]
-	\label{schmidt's curves}
 	\center
 	\includegraphics[width=.5\textwidth]{images/ocr2_train_passes.pdf}
 	\caption{Training curves for various optimization algorithms on the OCR dataset. The x axis is the number of epochs, while the y axis is the primal suboptimality.}
+	\label{schmidt's curves}
 \end{figure}
 
 
