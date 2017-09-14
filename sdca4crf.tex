@@ -52,7 +52,7 @@ The minimization takes place over the weight vector w parametrizing the conditio
 First we focus on problems where the number of classes,$|\Y|$ is small, such as multinomial logistic regression.
 For such problems, SDCA's application is straightforward from \cite{shalev-shwartz_accelerated_2013-1}.
 We propose a Non-Uniform Sampling scheme to improve the convergence speed.
-We test this approach on synthetic gaussian mixtures as a sanity check.
+We test this approach on synthetic gaussian mixtures and on the covertype dataset introduced in \cite{blackard_comparative_1999}.
  
 Then we apply SDCA to structured prediction.
 In structured prediction, each class or label is a structured object.
@@ -531,24 +531,74 @@ To fight staleness, they sample data point uniformly about half of the time.
 This mixed-scheme avoids a redundant pass over the data, which is not necessary for them.
 
 In SDCA, if we pick the element i, we have access to the duality gap $g_i$ for the cost $O(K)$ of computing a KL-divergence.
-We have to do a batch update every T epochs to get certificate of convergence.
+We have to do a batch update every T epochs to get a certificate of convergence.
 This is the opportunity to also update the sampling probabilities.
+
+Another sampling scheme has been proposed by Csiba in  in \cite{csiba_stochastic_2015} for SDCA to train a binary classifier.
+This method can easily be generalized to the multi-class setting.
+Their idea is to sample \textit{almost} proportionally to the norm of the dual ascent direction.
+\textit{Almost}, because they use a correction term accounting for the different characteristics of each sample.
+The formula applied to the logistic regession can be written:
+\begin{equation}
+	\label{csiba}
+	p_i \propto \| \beta_i - \alpha_i \l \sqrt{R_i^2 + 2 \lambda n} 
+\end{equation}
+where $\beta_i$ and $\alpha_i$ are as in algorithm \ref{sdca for logreg}. 
+$R_i^2$ is the spectral norm of $A_i^TA_i$.
+We compare our duality gap sampling scheme to this adaptation of Csiba's sampling scheme.
 
 The description of an algorithm to efficiently sample points proportionally to changing scores can be found in section 6.2 of \cite{nesterov_efficiency_2012}.
 The idea is to use binary search tree.
-The initialization is done in $O(n)$, the sampling in $O\log n)$ and the update of a score in $O(\log n)$.
+The initialization is done in $O(n)$, the sampling in $O(\log n)$ and the update of a score in $O(\log n)$.
 
 \subsection{Results}
 
-SDCA gives good results on synthetic gaussian mixtures. 
+We implement all the algorithms in plain Python and Numpy.
+They are all running locally on a Macbook Pro 2013 with 8GB of RAM and processor Intel Core i5.
+We do not compare SDCA with other algorithms on the Logistic Regression as we preferred to focus on CRFs - the core of this project.
+
+\paragraph{Gaussian mixtures}
+We first apply SDCA on synthetic gaussian mixtures dataset, as a sanity check.
+We draw points from gaussians.
+Then we standardize them.
+We add a bias component.
+Finally we train a multinomial logistic regression model to classify them.
+
+We observe the expected linear convergence rate.
+The slope varies slightly depending on the sampling scheme.
+Csiba's sampling scheme achieves a better rate.
+
+
 \begin{figure}[ht]
-	\label{gmm results}
-	\includegraphics[width=\textwidth]{images/nonuniform_is_better.pdf}
-	\caption{Comparison of the performance of various methods on a synthetic Gaussian mixture dataset.}
+	\label{training gaussians}
+	\center
+	\includegraphics[width=.8\textwidth]{images/20170914_061831_gaussians_perf.pdf}
+	\caption{Training curves for SDCA applied to the multinomial logistic regression on a dataset drawn from 6 gaussians in dimension 20. Uniform indicates uniform sampling. Gaps indicates our proposed sampling scheme. Csiba indicates the scheme described in \ref{csiba}. Mixed gaps indicates that points are sampled uniformly half of the time, and proportionally to gaps the other half. Idem for mixed csiba.}
 \end{figure}
 
-\todo{Comparison with the other non-uniform sampling method on a real dataset?}
 
+\paragraph{Covertype.}
+We train a logistic regression model on the Covertype dataset \cite{blackard_comparative_1999} with SDCA.
+The aim is to predict the kind of forest cover from geographic data. 
+There are 7 kinds of forest cover.
+We have $d'=54$ attributes (dimension of $x$).
+We restrain the training set to ten thousand samples, and set $\lambda = 1/n$.
+We observe the predicted linear rate.
+The uniform sampling method is really not steep compared to the others. 
+Once again, Csiba's scheme has the best result.
+Its performance is very similar to the mixed schemes.
+The method that samples purely based on duality gaps achieves a similar rate at first, but around $10^{-7}$ it stops improving as fast.
+
+To sum it up, Csiba's method is most likely superior to ours.
+A better empirical verification would require running this test on more datasets.
+Nevertheless, a strong point of the duality gap approach is that it can be adapted effortlessly to the CRF model.
+
+\begin{figure}[ht]
+	\label{training covertype}
+	\center
+	\includegraphics[width=.8\textwidth]{images/20170914_065817_covertype_perf.pdf}
+	\caption{Training curves for SDCA applied to the multinomial logistic regression on the Covertype dataset. Uniform indicates uniform sampling. Gaps indicates our proposed sampling scheme. Csiba indicates the scheme described in \ref{csiba}. Mixed gaps indicates that points are sampled uniformly half of the time, and proportionally to gaps the other half. Idem for mixed csiba.}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % CRF 
@@ -788,7 +838,9 @@ We write $\mathcal U_i = \sum_c |\Y_c|$. The complexity of the other parts of th
 \end{itemize}
 
 \subsection{Results}
-The algorithm is not working yet. 
+
+The algorithm is not working yet.
+
 
 \bibliographystyle{plain}
 \bibliography{optimization.bib}
