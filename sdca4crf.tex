@@ -7,6 +7,7 @@
 \usepackage{subcaption}
 \usepackage[section]{placeins}
 \usepackage{fullpage}
+\usepackage[affil-it]{authblk}
 \usepackage{todonotes}
 
 \usepackage{amsmath}
@@ -31,6 +32,7 @@
 
 \title{Stochastic Dual Coordinate Ascent \\ for \\ Conditional Random Fields}
 \author{R\'emi LE PRIOL}
+\affil{Montreal Institute of Learning Algorithms}
 \date{\today}
 
 \begin{document}
@@ -52,7 +54,7 @@ The minimization takes place over the weight vector w parametrizing the conditio
   
 First we focus on problems where the number of classes,$|\Y|$ is small, such as multinomial logistic regression.
 For such problems, SDCA's application is straightforward from \cite{shalev-shwartz_accelerated_2013-1}.
-We propose a Non-Uniform Sampling scheme to improve the convergence speed.
+We propose a Non-Uniform adaptive Sampling scheme to improve the convergence speed.
 We test this approach on synthetic gaussian mixtures and on the covertype dataset introduced in \cite{blackard_comparative_1999}.
  
 Then we apply SDCA to structured prediction.
@@ -70,6 +72,7 @@ The dual problem's natural variable is this joint probability $p(y|x ; w)$.
 We have to manipulate this joint for every data point.
 This does not fit in memory.
 We adapt SDCA by operating on marginal probabilities instead of the joints.
+We transpose the non-uniform sampling scheme to this version of SDCA.
 
 SDCA is a good candidate algorithm to train CRF.
 It has a linear convergence rate.
@@ -888,14 +891,16 @@ When $\lambda$ gets to smaller, more reasonable values, the algorithm gradually 
 \end{figure}
 
 
-To investigate what really happens, we can look at a number of variables. 
-In figure \ref{ocr annexes}, we look at the evolution of some of them.
+In figure \ref{ocr annexes}, we look at the evolution of some variables to get some insights on the behaviour of SDCA. 
 On the top, there is the norm of the primal descent direction.
 Second is the inner product between the weight vector and the primal descent direction.
 A negative inner product is a good thing since we want to minimize the norm of the weight vector.
-These two variables are used in the definition of the line search.
+This especially true at the beginning because we initialize SDCA with the uniform distribution.
+From there the entropy can only decrease to let the weight norm decrease as well.
+The plots show that indeed the inner product is mostly negative before oscillating around the zero line. 
+These two first variables are used in the definition of the line search.
 Both of them should converge towards zero.
-This is not true for the norm of the ascent direction, which do not converge for small values of $\lambda$.
+The norm of the ascent direction does not for small values of $\lambda$.
 
 The third line of plots represent the evolution of the step sizes.
 In every instance, they tend to be high and close to 1 at the beginning.
@@ -904,7 +909,8 @@ In total, about 70\% of the samples we pick are useless (step size = 0).
 
 The fourth line is the evolution of the dual score.
 This is the score that we are directly optimizing in SDCA.
-It increases as we would expect it
+It increases as we expect.
+If not for the duality gap, it looks converging.
 
 Finally the fifth line is the estimate of the duality gap that we get by taking the mean of the (stale) individual duality gaps.
 We observe a jump after each epoch.
@@ -973,7 +979,12 @@ If the algorithm was running normally, we would do that operation only every T e
 \end{figure}
 
 
+\section*{Conclusion}
 
+SDCA is applicable to train CRF models. 
+We still lack experimental evidences of its efficiency.
+Chances are that there exist a domain for which SDCA is more efficient than SAG, as illustrated by the complexity analysis.
+This project is still going at the MILA.
 
 
 \bibliographystyle{plain}
