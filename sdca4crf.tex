@@ -37,34 +37,44 @@
 \maketitle
 
 \section*{Introduction}
-In his paper \cite{shalev-shwartz_accelerated_2013-1}, Shalev-Shwartz describes and analyzes a version of the Stochastic Dual Coordinate Ascent (SDCA) algorithm for multi-class classification problems.
-He proves that SDCA has a linear convergence rate for these problems when the loss-functions are smooth.
-We apply SDCA on the $l^2$ regularized negative log-likelihood minimization. 
-The dual problem is the minimization of a squared distance regularized by the entropy.
+In his paper \cite{shalev-shwartz_accelerated_2013-1}, Shalev-Shwartz describes and analyzes the Stochastic Dual Coordinate Ascent (SDCA) to solve empirical risk minimization problems.
 SDCA update coordinates of the dual variable, one at a time or block by block, so as to raise the dual score.
-  
-First we focus on problems with a small number of classes.
-For such problems, SDCA's application is straight forward from \cite{shalev-shwartz_accelerated_2013-1}.
-This is the framework of multinomial logistic regression.
-Then we elaborate the theory for structured prediction problems.
-In structured prediction, each class or label is a structured object.
-For instance, if the labels are words from the dictionary, they can be seen as chains of letters.
-There are too many of these objects to count them all.
-More precisely  the labels live in a space that is finite but that is exponentially big in the size of the input.
-For instance, in the Optical Character Recognition dataset \cite{taskar_max-margin_2004}, the mean word length is 7.5.
-There exist $26^7 \sim 10^10$ lower case strings of length 7.
-This is too large to be explored naively.
-However we can use the structure over the labels to make the problem tractable.
+He proves that SDCA has a linear convergence rate for these problems when the loss-functions are smooth.
 
-In the Conditional Random Fields (CRF) setting, the distribution of labels conditioned on an input is Markov with respect to an undirected graphical model (mathematician language) / Markov random field (computer scientist language). 
-The dual problem's natural variables are the joint probabilities over all the potential labels.
+We apply SDCA on the $l^2$ regularized negative log-likelihood minimization.
+Given n sample $x_i \in \mathcal X$ and their labels $y_i \in \Y$, the problem we aim to solve has the form:
+\begin{equation*}
+	 \min_{w \in \R^d} \frac{\lambda}{2}\|w\|^2 - \frac{1}{n}   \sum_{i=1}^{n} \log(p(y_i|x_i; w))
+\end{equation*}
+The minimization takes place over the weight vector w parametrizing the conditional probability of y given x. 
+  
+First we focus on problems where the number of classes,$|\Y|$ is small, such as multinomial logistic regression.
+For such problems, SDCA's application is straightforward from \cite{shalev-shwartz_accelerated_2013-1}.
+We propose a Non-Uniform Sampling scheme to improve the convergence speed.
+We test this approach on synthetic gaussian mixtures as a sanity check.
+ 
+Then we apply SDCA to structured prediction.
+In structured prediction, each class or label is a structured object.
+This problem is notoriously hard because the set of labels $\Y$ is exponentially large in the size of x.
+For instance, if $x$ is a sequence of images of letters, then $\Y$ is the set of sequences of  letters with the same length as $x$.
+In the Optical Character Recognition dataset (OCR, \cite{taskar_max-margin_2004}), the mean word length is 7.5.
+There exist $26^7 \sim 10^{10}$ lower case strings of length 7.
+This is too large to be explored naively.
+
+Our main contribution is to adapt SDCA to exploit the structure in the labels.
+In the Conditional Random Fields model (CRF, \cite{lafferty_conditional_2001} ), the conditional distribution $p(y|x ; w)$ has a structure.
+This structure is described by an undirected graphical model (a.k.a. Markov Random Fields). 
+The dual problem's natural variable is this joint probability $p(y|x ; w)$.
 We have to manipulate this joint for every data point.
 This does not fit in memory.
-If the graphical model has a junction tree, we can leverage the Markov property of the labels.
-The marginals with respect to the cliques of that tree contain all the information of the joint probability.
-We use these marginals as a new variable.
+We adapt SDCA by operating on marginal probabilities instead of the joints.
 
-We test SDCA on synthetic mixtures of gaussians for the logistic regression, and on the OCR data set for the CRF.
+SDCA is a good candidate algorithm to train CRF.
+It has a linear convergence rate.
+It performs an exact line search for a limited cost.
+We apply SDCA on the OCR dataset.
+This work is still in progress.
+We provide preliminary results.
 
 \tableofcontents
 
@@ -74,8 +84,8 @@ We test SDCA on synthetic mixtures of gaussians for the logistic regression, and
 
 We consider the classical supervised learning setting.
 We observe n data points $x_i \in \mathcal{X}$, with their labels $y_i\in \Y_i:= \{1,..,K\}$, for $i \in {1,..,n}$.
-We index i to $\Y$ in order to be consistent with the structured part where the label space $\Y$ depends on the input $x_i$.
-Similarly, we will index i to every function whose domain of definition depend on the sample i.
+We index $\Y$ with i in order to be consistent with the structured part where the label space $\Y$ depends on the input $x_i$.
+Similarly, we will index every function with i  whose domain of definition depend on the sample i.
 We assume that the pairs $(x_i, y_i)$ are sampled independently and are identically distributed (i.i.d hypothesis).
 Given a new vector $x$, we want to predict the corresponding label $y$. 
 To do so, we first estimate a probability distribution over the classes $p(y|x ; w)$.
@@ -111,8 +121,8 @@ It should be noted that in general $d'$ includes a bias dimension.
 The last coordinate of each x is set to 1 (or another constant).
 The effective dimension where the x lives is $d'-1$.
 With such models, we get polygonal classification boundaries in the effective space $\mathcal X = \R^{d'-1}$.
-This is shown in figure \ref{linear classification} for $d'=3$.
-In the full 3d space, the decision areas are conic shapes centred on the origin.
+This is shown in figure \ref{linear classification} for $d'=3$, where we plot the plan $z=1$.
+In the full space $\R^{d'}$, the decision areas are conic shapes centred on the origin.
 
 \begin{figure}[ht]
 	\label{linear classification}
@@ -165,7 +175,7 @@ We can then remove the linear term from the objective:
 \end{equation*}
 We can write this problem in a more vectorial form.
 Denote the log-partition function (the log-sum-exp) $\phi(z) = \log \big(\sum_{y=1}^K \exp(z_y)\big)$. 
-Denote $A_i$ the $d \times |\Y_i|$ matrix whose columns are the $\psi_i(y)$ for $y \in \Y_i$.
+Denote $A_i$ the $d \times K$ matrix whose columns are the $\psi_i(y)$ for $y \in \Y_i$.
 From now on we will refer to the following formulation as \textit{primal problem}.
 \begin{equation}
 	\label{primal problem}
@@ -175,8 +185,8 @@ From now on we will refer to the following formulation as \textit{primal problem
 \paragraph{Convexity.}
 Let's convince ourselves that this is a convex problem in w.
 The $l^2$ penalty is of course convex.
-The log-sum-exp is a convex function.
-One can verify that it's Hessian is a semi-definite positive matrix -- it is also $1/2$-smooth.
+The log-sum-exp is a convex function -- it is also smooth with constant $0.5$.
+One can verify that it's Hessian is a semi-definite positive matrix.
 We apply this convex function to a linear transformation of w.
 Hence the convexity.
 The $l^2$ regularization guarantees that the function we are optimizing is at least $\lambda$ strongly convex. 
@@ -194,9 +204,13 @@ The gradient of the right hand term with respect to w is the opposite of the exp
 \end{equation}
 This will prove useful in the following.
 
-\section{Background}
-The problem \ref{primal problem} has been studied for a long time.
-
+\section{Anterior Works}
+The problem \ref{primal problem} is long running.
+A number of approach has been tried.
+The difficulty arises from the high dimensionality d, and  most importantly from the number of samples n.
+In 2001, \cite{lafferty_conditional_2001} described the setting and proposed an iterative scaling approach.
+That was not as efficient as the generic deterministic algorithm : limited-memory memory quasi-Newton (L-BFGS, \cite{wallach_efficient_2002},\cite{sha_shallow_2003}).
+Deterministic algorithms require computing probabilities for the n examples. 
 
 
 
@@ -210,20 +224,20 @@ In this case, as the problem is unconstrained, we use Fenchel duality theorem to
 
 \subsubsection*{Derivation}
 
-We write $g(w) :=  \frac{\lambda}{2}\|w\|^2$ the convex regularization function. The primal problem becomes:
+We write $R(w) :=  \frac{\lambda}{2}\|w\|^2$ the convex regularization function. The primal problem becomes:
 \begin{equation*}
 	\min_{w \in \R^d}  g(w) + \frac{1}{n} \sum_{i=1}^n \phi_i(- A_i^T w)
 \end{equation*}
-We note $g^*$ and $\phi_i^*$ the convex conjugates (aka Fenchel dual functions) of $g$ and $\phi_i$ respectively.
+We note $R^*$ and $\phi_i^*$ the convex conjugates (aka Fenchel dual functions) of $R$ and $\phi_i$ respectively.
 The Fenchel dual associated to this problem is derived as follows :
 \begin{align*}
-	 \min_w \ f(w) + \frac{1}{n} \sum_i \phi_i(- A_i^T w) & = \min_w \ \max_{z\in \dom g^*} z^Tw - g^*(z) + \frac{1}{n} \sum_i \max_{\alpha_i \in \dom \phi_i^*} \alpha_i^T (-A_i^T w) - \phi_i^*(\alpha_i) \\
-	 	& \geq \max_{z, \alpha} \  \min_w w^T(z - \frac{1}{n} \sum_i A_i \alpha_i) - g^*(z) - \frac{1}{n} \sum_i \phi_i^*(\alpha_i) \\
-		& =  \max_{\alpha} \   - g^*(\frac{1}{n} \sum_i A_i \alpha_i) + \frac{1}{n} \sum_i -\phi_i^*(\alpha_i) \quad \textrm{if} \quad z= \frac{1}{n} \sum_i A_i \alpha_i \quad , -\infty \textrm{ otherwise.}\\
+	 \min_w \ R(w) + \frac{1}{n} \sum_i \phi_i(- A_i^T w) & = \min_w \ \max_{z\in \dom g^*} z^Tw - R^*(z) + \frac{1}{n} \sum_i \max_{\alpha_i \in \dom \phi_i^*} \alpha_i^T (-A_i^T w) - \phi_i^*(\alpha_i) \\
+	 	& \geq \max_{z, \alpha} \  \min_w w^T(z - \frac{1}{n} \sum_i A_i \alpha_i) - R^*(z) - \frac{1}{n} \sum_i \phi_i^*(\alpha_i) \\
+		& =  \max_{\alpha} \   - R^*(\frac{1}{n} \sum_i A_i \alpha_i) + \frac{1}{n} \sum_i -\phi_i^*(\alpha_i) \quad \textrm{if} \quad z= \frac{1}{n} \sum_i A_i \alpha_i \quad , -\infty \textrm{ otherwise.}\\
 \end{align*}
-When $g$ is the $l^2$ regularization, the convex conjugate is $g^*: z \mapsto \frac{1}{2\lambda}\|z\|^2$, with domain $\R^d$.
+When $R$ is the $l^2$ regularization, the convex conjugate is $R^*: z \mapsto \frac{1}{2\lambda}\|z\|^2$, with domain $\R^d$.
 The convex conjugate of the log-sum-exp is the negative entropy. 
-Its domain is $\Delta_i$ the simplex of dimension $|\Y_i|$.
+Its domain is $\Delta_i$ the simplex of dimension $K$.
 \begin{equation}
 	-\phi_i^*(\alpha_i) = H_i(\alpha_i) := - \sum_{y \in \Y_i} \alpha_i(y) \log(\alpha_i(y))
 \end{equation}
@@ -231,7 +245,7 @@ Finally we get the dual problem of (\ref{primal problem}) in a closed form:
 \begin{equation*}
 	\max_{\alpha | \forall i, \alpha_i \in \Delta_i} \mathscr{D}(\alpha) = -\frac{1}{2\lambda} \| \frac{1}{n} \sum_i A_i \alpha_i \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
 \end{equation*}
-$\alpha$ is a vector of length $\sum_i |\Y_i|$.
+$\alpha$ is a vector of length $n\ K$.
 Each of its n blocks live in the simplex.
 $\alpha_i$ should be interpreted as a probability density on the labels for sample i.
 
@@ -264,7 +278,7 @@ These dual weights appear naturally in the dual problem. We use them to write th
 
 Formula \ref{dual to primal} can be written in a number of ways, each time outlining some property.
 We write A the horizontal concatenation of the $A_i$.
-It is a matrix of size $d \times \sum_i |\Y_i|$.
+It is a matrix of size $d \times n\ K$.
 \begin{align}
 	\bm w(\alpha) & = \frac{1}{\lambda n} A \alpha \label{linearity} \\
 	 & = \frac{1}{\lambda} \E_{i} [ \E_{y \sim \alpha_i} [\psi_i(y)]] \label{corrected features centroid} \\
@@ -414,7 +428,7 @@ the function of the step size we want to maximize is
 \end{equation*}
 where $d_{[i]}$ is the matrix n*K whose line i is $d_i$ and where the rest is 0.
 We expand the first term to highlight the quadratic dependency on $\gamma$.
-Calculating the derivatives is straight forward.
+Calculating the derivatives is straightforward.
 \begin{align*}
 	f(\gamma)
 	& = H_i(\alpha_i^{(k)} + \gamma d_i)
@@ -490,7 +504,7 @@ SDCA gives good results on synthetic gaussian mixtures.
 \paragraph{What is it?}
 Structured prediction is a category of multi-class classification problems.
 The particularity is that we have information about the structure of the classes.
-For instance we would like to identify a word of length T from T images of letters, and we know that there is a chain structure on these letters (OCR \todo{put citation   here}).
+For instance we would like to identify a word of length T from T images of letters, and we know that there is a chain structure on these letters (OCR dataset introduced in \cite{taskar_max-margin_2004}).
 Or we could parse sentences and we know that there is a natural tree structure defined by the grammar.
 Another typical instance is semantic segmentation in images : we know a priori that boundaries between objects should be sharp and that objects are usually connected areas.
 We keep the same notations as before.
