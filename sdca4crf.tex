@@ -40,8 +40,8 @@
 \maketitle
 
 \section*{Introduction}
-In his paper \cite{shalev-shwartz_accelerated_2013-1}, Shalev-Shwartz describes and analyzes the Stochastic Dual Coordinate Ascent (SDCA) to solve empirical risk minimization problems.
-SDCA update coordinates of the dual variable, one at a time or block by block, so as to raise the dual score.
+In his paper \cite{shalev-shwartz_accelerated_2013-1}, Shalev-Shwartz describes and analyzes the Stochastic Dual Coordinate Ascent algorithm (SDCA) to solve empirical risk minimization problems.
+SDCA updates coordinates of the dual variable, one at a time or block by block, so as to raise the dual score.
 He proves that SDCA has a linear convergence rate for these problems when the loss-functions are smooth.
 
 We apply SDCA on the $l^2$ regularized negative log-likelihood minimization.
@@ -52,9 +52,9 @@ Given n sample $x_i \in \mathcal X$ and their labels $y_i \in \Y$, the problem w
 \end{equation}
 The minimization takes place over the weight vector w parametrizing the conditional probability of y given x. 
   
-First we focus on problems where the number of classes,$|\Y|$ is small, such as multinomial logistic regression.
+First we focus on problems where the number of classes $|\Y|$ is small, such as multinomial logistic regression.
 For such problems, SDCA's application is straightforward from \cite{shalev-shwartz_accelerated_2013-1}.
-We propose a Non-Uniform adaptive Sampling scheme to improve the convergence speed.
+We propose a Non-Uniform adaptive Sampling scheme (NUS) to improve the convergence speed.
 We test this approach on synthetic gaussian mixtures and on the covertype dataset introduced in \cite{blackard_comparative_1999}.
  
 Then we apply SDCA to structured prediction.
@@ -68,9 +68,8 @@ This is too large to be explored naively.
 Our main contribution is to adapt SDCA to exploit the structure in the labels.
 In the Conditional Random Fields model (CRF, \cite{lafferty_conditional_2001} ), the conditional distribution $p(y|x ; w)$ has a structure.
 This structure is described by an undirected graphical model (a.k.a. Markov Random Fields). 
-The dual problem's natural variable is this joint probability $p(y|x ; w)$.
-We have to manipulate this joint for every data point.
-This does not fit in memory.
+The dual problem's natural variables are the conditional joint probabilities $p(y|x_i ; w)$.
+We have to manipulate this joint for every data point, while not even one of them fits in memory.
 We adapt SDCA by operating on marginal probabilities instead of the joints.
 We transpose the non-uniform sampling scheme to this version of SDCA.
 
@@ -81,6 +80,7 @@ We apply SDCA on the OCR dataset.
 This work is still in progress.
 We provide preliminary results.
 
+\clearpage
 \tableofcontents
 
 \section{Background}
@@ -91,25 +91,25 @@ In 2001, \cite{lafferty_conditional_2001} described the CRF model and proposed a
 That was not as efficient as the generic deterministic algorithm : limited-memory memory quasi-Newton (L-BFGS, \cite{wallach_efficient_2002}, \cite{sha_shallow_2003}).
 Deterministic algorithms require performing some computation for each of the n data points at each step.
 This is not tractable for very large n.
-Researchers tried to apply stochastic methods such as the stochastic gradient descent (\cite{vishwanathan_accelerated_2006}, \cite{finkel_efficient_2008}).
+Researchers have tried to apply stochastic methods such as the stochastic gradient descent (\cite{vishwanathan_accelerated_2006}, \cite{finkel_efficient_2008}).
 These methods have a sub-linear convergence rate.
 They take $O(1/\epsilon)$ iterations to reach precision $\epsilon$.
-This is much larger than the $O(\log(1/\epsilon))$ iterations required by deterministic methods.
+This is much larger than the $O(\log(1/\epsilon))$ iterations required by deterministic methods (this is called a linear rate).
 
 \paragraph{Variance Reduction.}
 This is where the variance reduction methods come into play.
 These methods achieve both a linear convergence rate, and a cheap update cost (independent of n).
 There is a trade-off though.
 They also require a memory  $O(n)$.
-Thanks to this memory these methods overcome the variance ball issue of the stochastic gradient descent.
+Thanks to this memory these methods avoid staying on the surface of the variance ball, as in the stochastic gradient descent.
 They get an update whose variance vanish as we get closer from the optimum.
 The family of variance reduction  include : 
 \begin{itemize}
 	\item	 Exponentiated Gradient in 2008 \cite{collins_exponentiated_2008}, developed primarily for structured prediction.
 	\item Stochastic Average Gradient (SAG) in 2012 \cite{roux_stochastic_2012}
 	\item SDCA in 2013
-	\item Stochastic Variance Reduced Gradient (SVRG) in 2014 \cite{johnson_accelerating_2013} which coined the term "variance reduced"
-	\item SAGA in 2014 \cite{defazio_saga:_2014} which showed that all these methods have the same "variance reduced" structure.  
+	\item Stochastic Variance Reduced Gradient (SVRG) in 2014 \cite{johnson_accelerating_2013} which coined the term "variance reduction"
+	\item SAGA in 2014 \cite{defazio_saga:_2014} which showed that all these methods have the same structure.  
 \end{itemize}
 
 \paragraph{Application to CRF.}
@@ -120,21 +120,24 @@ In 2014 \cite{schmidt_non-uniform_2015}, Schmidt adapted SAG to train CRF models
 He got state of the art results on a number of sequence datasets, totally outperforming the exponentiated gradient and other competitors.
 Our contribution is in the direct lineage of these two works.
 SDCA is very similar to the Exponentiated Gradient.
-Both operates in the dual, but SDCA has a linear convergence rate guarantee on the duality gap.
+Both operates in the dual, but SDCA's linear convergence rate is  guaranteed on the duality gap.
+This is theoretically stronger than the exponentiated gradient.
 That makes SDCA closer from SAG in terms of theoretical guarantee.
 
 \paragraph{Non-Uniform Sampling}
 Schmidt improved SAG with a non-uniform sampling scheme.
-A variety of non-uniform sampling schemes have been proposed for SDCA, such as in \cite{csiba_stochastic_2015} which applies to binary classification.
+A variety of non-uniform sampling schemes have been proposed for SDCA, such as \cite{csiba_stochastic_2015} which applies to binary classification.
 We propose a new approach inspired by \cite{osokin_minding_2016} to improve the Block Coordinate Franck Wolfe algorithm from \cite{lacoste-julien_block-coordinate_2012}.
 We sample proportionally to estimates of individual duality gaps.
 The assumption is that if a point has a high duality gap, we will decrease more efficiently  the overall duality gap by moving that point. 
 
 \paragraph{Convergence rates.}
-Below we reproduce a table from \cite{schmidt_non-uniform_2015}stating the convergence rates of different methods for training CRFs.
+Below we reproduce a table from \cite{schmidt_non-uniform_2015} stating the convergence rates of different methods for training CRFs.
 It includes the fastest known rates for deterministic algorithms (like L-BFGS), stochastic algorithms (like [averaged] stochastic gradient), online exponentiated gradient, and SAG.
 We append SDCA to this list.
-We denote $L$ the Lipschitz constant of the gradient of the objective, $m$ the strong-convexity constant (and we have $\lambda \leq m \leq L$), and $\sigma^2$ bounds the variance of the gradients.\\
+We denote $L$ the Lipschitz constant of the gradient of the objective, and $m$ the strong-convexity constant .
+We have $\lambda \leq m \leq L$.
+We call $\sigma^2$ a bound on the variance of the gradients.\\
 \begin{center}
 \begin{tabular}{llc}
 Deterministic: & $O(n\sqrt{\frac{L}{m}}\log(1/\epsilon))$ & (primal)\\
@@ -145,12 +148,12 @@ SDCA & $O( (n + \min( \frac{L}{\lambda}, \sqrt{\frac{n L}{\lambda}}) ) \log(1/\e
 \end{tabular}
 \end{center}
 Compared to SAG, SDCA suffer a dependency on the regularization parameter $\lambda$ instead of $m$.
-It means that SAG can is adaptative to  hidden strong-convexity, but not SDCA.
-For large values of $\lambda$, the problem is rather well  conditioned $L/m \leq L/\lambda \leq n$.
+It means that SAG is adaptative to  hidden strong-convexity, but not SDCA.
+For large values of $\lambda$, the problem is very-strongly convex, and rather well  conditioned $L/m \leq L/\lambda \leq n$.
 Then we expect SDCA to behave worse than SAG.
 On the other hand, if $\lambda$ is small and the problem is ill conditioned, SDCA may outperform SAG.
-A typical value is $\lambda=1/n$.
-Then, if $m$ is not much smaller than $\lambda$, both algorithms should be comparable.
+In between these extremes lies the typical value $\lambda=1/n$.
+For such a value, if $m$ is not much smaller than $\lambda$, both algorithms should be comparable.
 
 \section{Multinomial Logistic Regression}
 
@@ -159,7 +162,7 @@ Then, if $m$ is not much smaller than $\lambda$, both algorithms should be compa
 We consider the classical supervised learning setting.
 We observe n data points $x_i \in \mathcal{X}$, with their labels $y_i\in \Y_i:= \{1,..,K\}$, for $i \in {1,..,n}$.
 We index $\Y$ with i in order to be consistent with the structured part where the label space $\Y$ depends on the input $x_i$.
-Similarly, we will index every function with i  whose domain of definition depend on the sample i.
+Similarly, we will index with i every function  whose domain of definition depend on the sample i.
 We assume that the pairs $(x_i, y_i)$ are sampled independently and are identically distributed (i.i.d hypothesis).
 Given a new vector $x$, we want to predict the corresponding label $y$. 
 To do so, we first estimate a probability distribution over the classes $p(y|x ; w)$.
@@ -169,13 +172,13 @@ The predicted label is then defined as a mode of this distribution : $\hat y = h
 \paragraph{Features.}
 We have no assumption on the space $\mathcal X$ but we have access to a feature extractor $F:\mathcal X \times \mathcal Y \rightarrow \R^d$.
 These features can be either pre-trained or handcrafted.
-For each couple data point - label, we get features as a vector of dimension d.
+For each couple data point - label, we get features as a vector of dimension $d$.
 
 \paragraph{Linear Assumption.}
 We assume that the score of a label is given as a linear function of its feature.
 A consequence is that we have as many weights vas we have  features.
-$w$ has dimension d.
-We apply the softmax on these scores to get a probability vector. 
+$w$ has dimension $d$.
+We apply a softmax on these scores to get a probability vector. 
 \begin{equation}
 	\label{primal probability}
 	p(y | x ; w) := \frac{\exp(w^TF(x, y))}{\sum_{y' \in \mathcal{Y}} \exp(w^TF(x, y'))}
@@ -183,32 +186,29 @@ We apply the softmax on these scores to get a probability vector.
 
 When there are few classes ($K \leq \sim 10^3$), the features we use are a block encoding of the class.
 This is what is commonly called \textbf{multinomial logistic regression}.
-If x are vectors of dimension $d'$, we set $d:=Kd'$. $F(x, y=k)$ then has a copy of x on its $k$-th block of size $d'$, and zeros everywhere else.
-In terms of linear model, this is the same as having one weights vector $w_k$ per class.
+If the $x_i$ are vectors of dimension $d'$, we set $d:=Kd'$. The feature vector $F(x, y)$ has a copy of $x$ on its $y$-th block of size $d'$, and zeros everywhere else.
+In terms of linear model, this is the same as having one weight vector $w_y$ per class, so that $w^TF(x, y) = w_y^Tx$.
 For the sake of comparison, this is like a shallow neural network with no hidden layer.
 The input layer is of size $d'$.
 The output layer of size K.
-The weight matrix W of size $K \times d'$ is the vertical concatenation of the $w_k$.
+The weight matrix W of size $K \times d'$ is the vertical concatenation of the $w_y$.
 We apply a softmax on the output layer.
+
+\begin{figure}[ht]
+	\label{linear boundaries}
+	\includegraphics[width=\textwidth]{images/linear_classification.pdf}
+	\caption{Optimal decision areas for the multinomial logistic regression.
+	The data points are drawn from a balanced gaussian mixture in dimension 2.
+	We set the bias constant to 1 and plot only the plan z=1.
+	Each colour correspond to a class predicted by a linear model fitted on these points.}
+\end{figure}
 
 It should be noted that in general $d'$ includes a bias dimension.
 The last coordinate of each x is set to 1 (or another constant).
 The effective dimension where the x lives is $d'-1$.
 With such models, we get polygonal classification boundaries in the effective space $\mathcal X = \R^{d'-1}$.
-This is shown in figure \ref{linear classification} for $d'=3$, where we plot the plan $z=1$.
+This is shown in figure \ref{linear boundaries} for $d'=3$, where we plot the plan $z=1$.
 In the full space $\R^{d'}$, the decision areas are conic shapes centred on the origin.
-
-\begin{figure}[ht]
-	\label{linear classification}
-	\includegraphics[width=\textwidth]{images/linear_classification.pdf}
-	\caption{
-	Optimal decision areas for the multinomial logistic regression.
-	The data points are drawn from a balanced gaussian mixture in dimension 2.
-	We set the bias constant to 1 and plot only the plan z=1.
-	Each colour correspond to a class predicted by a linear model fitted on these points. 
-	}
-\end{figure}
-
 
 
  \subsection{Maximum Likelihood}
@@ -257,7 +257,7 @@ From now on we will refer to the following formulation as \textit{primal problem
 \end{equation} 
 
 \paragraph{Convexity.}
-Let's convince ourselves that this is a convex problem in w.
+Let's show that this is a convex problem in w.
 The $l^2$ penalty is of course convex.
 The log-sum-exp is a convex function -- it is also smooth with constant $0.5$.
 One can verify that it's Hessian is a semi-definite positive matrix.
@@ -267,11 +267,11 @@ The $l^2$ regularization guarantees that the function we are optimizing is at le
 
 
 \paragraph{Gradients.}
-Let's notice that the gradient of the log-partition function evaluated in $-A_i^Tw$ is the conditional probability vector of the classes given x, as defined by the softmax function.
+Let's notice that the gradient of the log-partition function evaluated on the score vector $-A_i^Tw$ is the conditional probability vector of the classes given x, as defined by the softmax function.
 \begin{equation}
 	\nabla \phi_i(-A_i^Tw) = (p(y | x_i ; w))_{y \in \Y_i}
 \end{equation}
-The gradient of the right hand term with respect to w is the opposite of the expectation of the corrected features according to these probabilities.
+The gradient with respect to w of the full right hand term in (\ref{primal problem}) is the opposite of the expectation of the corrected features according to these probabilities.
 \begin{equation}
 	\label{primal gradient}
 	\nabla_w (\phi_i(-A_i^Tw)) = - \E_{y \sim p(. | x_i ; w)} [\psi_i(y)]
@@ -287,7 +287,7 @@ In this case, as the problem is unconstrained, we use Fenchel duality theorem to
 
 We write $R(w) :=  \frac{\lambda}{2}\|w\|^2$ the convex regularization function. The primal problem becomes:
 \begin{equation*}
-	\min_{w \in \R^d}  g(w) + \frac{1}{n} \sum_{i=1}^n \phi_i(- A_i^T w)
+	\min_{w \in \R^d}  R(w) + \frac{1}{n} \sum_{i=1}^n \phi_i(- A_i^T w)
 \end{equation*}
 We note $R^*$ and $\phi_i^*$ the convex conjugates (aka Fenchel dual functions) of $R$ and $\phi_i$ respectively.
 The Fenchel dual associated to this problem is derived as follows :
@@ -306,14 +306,14 @@ Finally we get the dual problem of (\ref{primal problem}) in a closed form:
 \begin{equation*}
 	\max_{\alpha | \forall i, \alpha_i \in \Delta_i} \mathscr{D}(\alpha) = -\frac{1}{2\lambda} \| \frac{1}{n} \sum_i A_i \alpha_i \|^2 + \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)
 \end{equation*}
-$\alpha$ is a vector of length $n\ K$.
+The vector $\alpha$ has length $n\times K$.
 Each of its n blocks live in the simplex.
-$\alpha_i$ should be interpreted as a probability density on the labels for sample i.
+The block $\alpha_i$ should be interpreted as a probability density on the labels for sample i.
 
 \subsubsection*{Optimality Condition}
 For this problem, \textbf{strong duality holds}.
 The inequality in the derivation above is an equality.
-This is true because the $l^2$ regularization is defined on the whole space $\R^d$ and the log-sum-exp functions are continuous on their whole space as well.
+This is true by the Fenchel Duality theorem because the $l^2$ regularization is defined on the whole space $\R^d$ and the log-sum-exp functions are continuous on their whole space as well.
 
 The primal problem is strongly convex, so there is only one minimum.
 Similarly, the dual problem is strongly concave, so there is only one maximum.
@@ -354,17 +354,18 @@ We then get another optimality condition $\bm \alpha(w^*) = \alpha^*$.
 $\bm \alpha(w)$ with a bold $\bm \alpha$ is the probability density on the training set defined by the weights w (equation \ref{primal probability}).
 \begin{equation}
 	\label{primal to dual}
-	\forall i, \alpha_i(w) = \nabla\phi_i(-A_i^Tw) = p(.|x; w) \propto \exp(-w^T \psi_i(.))
+	\forall i, \bm \alpha_i(w) = \nabla\phi_i(-A_i^Tw) = p(.|x_i; w) \propto \exp(-w^T \psi_i(.))
 \end{equation}
 
 \subsubsection*{Interpretation}
 The primal problem is a regularized maximization of the likelihood of w. 
 In the dual problem \ref{dual problem}, we control directly the probabilities given to each class on the training samples.
 There are two conflicting terms.
-The left hand one is the opposite of the squared distance between the centroid of the ground truth features and the centroids predicted by the dual model. It is maximal for the empirical distribution.
+The left hand one is the opposite of the squared distance between the centroid of the ground truth features and the centroids predicted by the dual model.
+It is maximal for the empirical distribution.
 The second term aims at maximizing the entropy of this distribution.
 It pushes the $\alpha_i$ towards a more uniform distribution.
-Thus the role of the terms is inverted compared to the primal problem : the data fitting term is the squared euclidean distance, and the regularization is the entropy.
+Thus the role of the terms is inverted compared to the primal problem : the data fitting term is the squared euclidean distance, and the regularization term is the entropy.
 
 \paragraph{Naming :} 
 We call \textit{primal model}, the one where we are given \textit{primal weights} $w$, from which we deduce \textit{primal probabilities} $\bm \alpha_i(w)$.
@@ -372,7 +373,7 @@ We call \textit{dual model}, the one where we are given \textit{dual probabiliti
 The optimality conditions tell us that at the optimum, these two models are equal.
 $\alpha^*$ is a fixed point for $\bm \alpha \circ \bm w$.
 $w^*$ is a fixed point for $\bm w \circ \bm \alpha$.
-The optimization can be seen as a back and forth between the primal variable and the dual variable.
+The optimization can be seen as a back and forth between the primal variable and the dual variable to find these fixed points.
 
 %%%%%%%%%%%%%
 \subsection{Duality Gaps}
@@ -387,7 +388,7 @@ It is interesting to look at the duality gap for both the primal model and the d
 We inject the expression of $\bm \alpha_i(w)$ in the entropy to find the formula:
 \begin{equation}
 	\label{primal duality gap}
-	g(w,\bm \alpha(w)) = \frac{\lambda}{2} \|w-w(\bm \alpha(w))\|^2
+	g(w,\bm \alpha(w)) = \frac{\lambda}{2} \|w- \bm w(\bm \alpha(w))\|^2
 \end{equation}
 This formula involves $\bm w(\bm \alpha(w))$.
 This is what the dual model created by the primal probabilities think the weights should be. 
@@ -402,15 +403,16 @@ This means that the squared norm of the batch gradient is proportional to a dual
 \begin{equation}
 	g(w,\bm \alpha(w)) = \frac{1}{2 \lambda} \|\nabla \mathscr P(w)\|^2
 \end{equation}
-In SAG, (see \cite{schmidt_non-uniform_2015}), Schmidt et al. use an estimator right hand term as a descent direction.
+In SAG, (see \cite{schmidt_non-uniform_2015}), Schmidt et al. use a biased estimator of the gradient as a descent direction.
 They also use the norm of this estimator as a certificate to decide when to stop.
-The justification was that since the gradient converges toward zero, the estimator converges toward zero as well.
+The justification is that since the gradient converges toward zero, the estimator converges toward zero as well.
 If the objective is m-strongly convex there is also the bound:
 \begin{equation*}
 	\mathscr P (w) - \mathscr P(w^*) \leq \frac{1}{2 m}\|\nabla \mathscr P (w)\|^2
 \end{equation*}
 since the objective is at least $\lambda$-strongly convex we retrieve that the duality gap dominates the primal sub-optimality.
-It means that they could monitor not only the primal convergence, but also the dual convergence.
+They are actually using an estimator of the duality gap as a certificate to decide when to stop.
+For the cost of a another epoch, they could have the exact duality gap certificate.
 
 \paragraph{Dual model:}
 The gap for the dual model is naturally expressed as a sum of Fenchel duality gaps between the convex conjugates $\phi_i$ and $-H_i$. 
@@ -419,9 +421,10 @@ The gap for the dual model is naturally expressed as a sum of Fenchel duality ga
 	& = \frac{1}{n} \sum_i \big [ \phi_i(-A_i^T \bm w(\alpha)) - H_i(\alpha_i) \big ] + \lambda \|\bm w(\alpha)\|^2 \\
 	& =  \frac{1}{n} \sum_i \big [ \phi_i(-A_i^T \bm w(\alpha)) - H_i(\alpha_i) - \langle \alpha_i,  -A_I^T \bm w(\alpha) \rangle \big ]
 \end{align*}
-Each of the divergence in the sum above is of course positive.
+Each of the term in the sum above is positive.
 They can be thought of as the duality gaps associated to each data point for the dual model.
-In particular, we have $\log(\alpha_i(w)) = -A_i^Tw - \phi_i(-A_i^Tw) \1$. Since $\alpha_i$ sums to one, we can inject this expression in the scalar product. We then get that each of the Fenchel duality gaps is also equal to the Kullback-Leibler divergence between the dual probability and the primal probability defined by the dual weights $w(\alpha)$.
+We call them \textit{individual duality gaps}.
+In particular, we have $\log(\alpha_i(w)) = -A_i^Tw - \phi_i(-A_i^Tw) \1$. Since $\alpha_i$ sums to one, we can inject this expression in the scalar product. We then get that each of the Fenchel duality gaps is also equal to the Kullback-Leibler divergence between the dual probability and the primal probability defined by the dual weights $\bm w(\alpha)$.
 \begin{equation}
 	\label{dual duality gaps}
 	g(\bm w(\alpha),\alpha) = \frac{1}{n} \sum_i D_{KL} (\alpha_i || \bm \alpha_i(\bm w(\alpha))
@@ -440,17 +443,18 @@ Finding the optimal update for $\alpha_i$ is a constrained optimization problem 
 The brilliant idea analyzed by Shalev-Shwartz is to update $\alpha_i$ towards a sub-gradient of the primal loss $\nabla\phi_i( - A_i^T\bm w(\alpha)) = \bm \alpha_i(\bm w(\alpha))$.
 This way, $\alpha_i$ is getting closer from what it should be equal to $\bm \alpha_i(\bm w(\alpha)$, and we can guarantee that the duality gap decreases enough.
 Plus, since $\Delta_K$ is convex, we are guaranteed to stay within the simplex after each step.  
-Formally, we define the dual ascent direction and the associated primal descent direction:
+Formally, we define the directions:
 \begin{align*}
-	d_i &:= \bm \alpha_i(\bm w(\alpha)) - \alpha_i \\
-	v_i &:= \frac{1}{\lambda n} A_i d_i  = \frac{1}{\lambda n} \big [ \E_{y \sim \alpha_i} [F(x_i, y)] - \E_{y \sim  \bm \alpha_i(\bm w(\alpha)) } [F(x_i, y)] \big ]
+	& \textrm{Dual ascent:} &  d_i &:= \bm \alpha_i(\bm w(\alpha)) - \alpha_i \\
+	&\textrm{Primal descent} &  v_i &:= \frac{1}{\lambda n} A_i d_i  = \frac{1}{\lambda n} \big [ \E_{y \sim \alpha_i} [F(x_i, y)] - \E_{y \sim  \bm \alpha_i(\bm w(\alpha)) } [F(x_i, y)] \big ]
 \end{align*} 
 The update formula is:
 \begin{equation*}
 	\alpha_i^+ \leftarrow \alpha_i + \gamma d_i = (1-\gamma)\alpha_i + \gamma \bm \alpha_i(\bm w(\alpha)) \quad \textrm{with} \quad \gamma \in [0,1]
 \end{equation*}
 The step size $\gamma$ is either fixed, either found via a line search on the segment between $\alpha_i$ and $\bm \alpha_i(\bm w(\alpha))$. 
-It belongs in $[0,1]$ because we want a convex combination of $\alpha_i$ and $\bm \alpha_i(\bm w(\alpha))$ to remain in the simplex without further checks. 
+It belongs in $[0,1]$ because we want a convex combination of $\alpha_i$ and $\bm \alpha_i(\bm w(\alpha))$.
+This way we remain in the simplex without further checks. 
 Most importantly, it is necessary for the proof of the linear convergence rate in \cite{shalev-shwartz_accelerated_2013-1}. 
 See algorithm \ref{sdca for logreg} for details.
 
@@ -487,7 +491,6 @@ the function of the step size we want to maximize is
 	\label{line search 1}
 	f_i(\gamma) = -\frac{\lambda n}{2} \|w + \gamma v_i\|^2 + H(\alpha_i + \gamma d_i) + \cst
 \end{equation*}
-where $d_{[i]}$ is the matrix n*K whose line i is $d_i$ and where the rest is 0.
 We expand the first term to highlight the quadratic dependency on $\gamma$.
 Calculating the derivatives is straightforward.
 \begin{align*}
@@ -519,7 +522,7 @@ To stabilize this, we replace the marginals inside the logorithms and in the den
 At each time step, we can compute the individual duality gap $g_i = D(\alpha_i || \beta_i)$ for a small cost $O(K)$.
 The mean of these gaps gives us an estimate of the duality gap.
 This can be used as a certificate to decide when to stop.
-A more reliable way is to check the true duality gap with a batch update every T epochs, or when this estimate gets low.
+It is better combined with a periodic full batch update to check the true duality gap.
 
 \paragraph{Non-Uniform Sampling.} 
 In the article \cite{osokin_minding_2016}, the authors improve the empirical rate of convergence of their stochastic algorithm with non-uniform sampling.
@@ -535,10 +538,11 @@ To fight staleness, they sample data point uniformly about half of the time.
 This mixed-scheme avoids a redundant pass over the data, which is not necessary for them.
 
 In SDCA, if we pick the element i, we have access to the duality gap $g_i$ for the cost $O(K)$ of computing a KL-divergence.
-We have to do a batch update every T epochs to get a certificate of convergence.
-This is the opportunity to also update the sampling probabilities.
+We can update the sampling probability.
+We also have to do a batch update periodically to get a certificate of convergence.
+This is the opportunity to update the full table of individua duality gaps.
 
-Another sampling scheme has been proposed by Csiba in  in \cite{csiba_stochastic_2015} for SDCA to train a binary classifier.
+Another adaptive sampling scheme has been proposed by Csiba et al.  in \cite{csiba_stochastic_2015} to train a binary classifier with SDCA.
 This method can easily be generalized to the multi-class setting.
 Their idea is to sample \textit{almost} proportionally to the norm of the dual ascent direction.
 \textit{Almost}, because they use a correction term accounting for the different characteristics of each sample.
@@ -549,6 +553,7 @@ The formula applied to the logistic regession can be written:
 \end{equation}
 where $\beta_i$ and $\alpha_i$ are as in algorithm \ref{sdca for logreg}. 
 $R_i^2$ is the spectral norm of $A_i^TA_i$.
+We approximate it with an upper bound : $\max_y \| \psi_i(y)\|^2$.
 We compare our duality gap sampling scheme to this adaptation of Csiba's sampling scheme.
 
 The description of an algorithm to efficiently sample points proportionally to changing scores can be found in section 6.2 of \cite{nesterov_efficiency_2012}.
@@ -558,11 +563,11 @@ The initialization is done in $O(n)$, the sampling in $O(\log n)$ and the update
 \subsection{Results}
 
 We implement all the algorithms in plain Python and Numpy.
-They are all running locally on a Macbook Pro 2013 with 8GB of RAM and processor Intel Core i5.
+They are all running locally on a Macbook Pro 2013 with 8GB of RAM and a processor Intel Core i5.
 We do not compare SDCA with other algorithms on the Logistic Regression as we preferred to focus on CRFs - the core of this project.
 
 \paragraph{Gaussian mixtures}
-We first apply SDCA on synthetic gaussian mixtures dataset, as a sanity check.
+As a sanity check, we first apply SDCA on synthetic gaussian mixtures dataset.
 We draw points from gaussians.
 Then we standardize them.
 We add a bias component.
@@ -577,7 +582,7 @@ Csiba's sampling scheme achieves a better rate.
 	\label{training gaussians}
 	\center
 	\includegraphics[width=.8\textwidth]{images/20170914_061831_gaussians_perf.pdf}
-	\caption{Training curves for SDCA applied to the multinomial logistic regression on a dataset drawn from 6 gaussians in dimension 20. Uniform indicates uniform sampling. Gaps indicates our proposed sampling scheme. Csiba indicates the scheme described in \ref{csiba}. Mixed gaps indicates that points are sampled uniformly half of the time, and proportionally to gaps the other half. Idem for mixed csiba.}
+	\caption{Training curves for SDCA applied to the multinomial logistic regression on a dataset of a 1000 points drawn from 6 gaussians in dimension 20. Uniform indicates uniform sampling. Gaps indicates our proposed sampling scheme. Csiba indicates the scheme described in \ref{csiba}. Mixed gaps indicates that points are sampled uniformly half of the time, and proportionally to gaps the other half. Idem for mixed csiba.}
 \end{figure}
 
 
@@ -591,7 +596,7 @@ We observe the predicted linear rate.
 The uniform sampling method is really not steep compared to the others. 
 Once again, Csiba's scheme has the best result.
 Its performance is very similar to the mixed schemes.
-The method that samples purely based on duality gaps achieves a similar rate at first, but around $10^{-7}$ it stops improving as fast.
+The method that samples purely based on duality gaps achieves a similar rate at first, but around $10^{-7}$ it nearly stops improving.
 
 To sum it up, Csiba's method is most likely superior to ours.
 A better empirical verification would require running this test on more datasets.
@@ -620,7 +625,8 @@ Or we could parse sentences and we know that there is a natural tree structure d
 Another typical instance is semantic segmentation in images : we know a priori that boundaries between objects should be sharp and that objects are usually connected areas.
 We keep the same notations as before.
 The difference is that now, for an input x, the label y will live in $\Y_x$ that depends on x.
-For instance, the word we predict will have as many letters as we have images, and the semantic segmentation will be an image of the same size as the input image. 
+For instance, in OCR the word we predict will have as many letters as we have images.
+In semantic segmentation, the label will be an image of the same size as the input image, where the value of each pixel denotes the class of this pixel. 
 
 \paragraph{Motivation.}
 Compared to standard multi-class classification, we need to exploit the structure because the output space $\Y_x$ has a size that is typically exponential in the size of the input x.
@@ -670,9 +676,9 @@ We define the marginal of $\alpha_i$ on the clique $c \in \mathcal C_i$.
 	\label{marginals definition}
 	\mu_{i, c}(y_c) := \sum_{y'\in \Y_i | y_c' = y_{i, c}} \alpha_i(y')
 \end{equation}
-The transformation from $\alpha$ to $\mu$ is linear.
+The transformation from $\alpha_i$ to $\mu_i$ is linear.
 We define $\mu_i \in \prod_c \Delta_|c|$ the concatenation of all the clique marginal vectors for the sample i.
-We write $MI$ the marginalization operator for sample i.
+We write $M_i$ the marginalization operator for sample i.
 It is a matrix of size $\sum_{c \in \mathcal C_i} |\Y_c| \times |\Y_i |$.
 The line $(c, y_c)$ of $M_i$ has a one on the columns $y'$ so that $y_c'=y_c$, and zeros everywhere else.
 The column $y$ of $M_i$ has $|\mathcal C|$ ones, located on the lines $(c, y_c)$.
@@ -718,7 +724,7 @@ $\mathcal C_{max} \subset \mathcal C $ is the set of maximal cliques of G.
 $\mathcal S$ is a set of separations (= intersection) of these cliques, that defines the tree $T$.
 The direct consequence is that we can run message passing on the junction tree.
 That means \textbf{we have a marginalization oracle} at hand : for any weight vector $w$ and data point $x$ we can infer the marginals $p_c(y_c |x ; w)$.
-The second consequence is that the joint probability $\alpha_i(y)$ can be written as a function of its marginals $\mu_{i, c}$.
+The second consequence is that \textbf{the joint probability $\alpha_i(y)$ can be written as a function of its marginals $\mu_{i, c}$}.
 \begin{equation}
 	\label{joint from marginals}
 	\alpha(y) = \frac{\prod_{c\in\mathcal{C}_{max}} \mu_c(y_c)}{\prod_{s\in\mathcal{S}} \mu_s(y_s)}
@@ -779,7 +785,7 @@ Another consequence is that we can no longer initialize the variable randomly.
 The marginals have to be coherent on the separations of the junction tree.
 A solution would be to initialize the weights randomly, and then to do a full batch marginalization.
 This is the same cost as running SDCA over the whole dataset once.
-A simpler and more economical solution is probably to initialize the marginals to uniform distributions.
+A simpler and more economical solution is probably to initialize the marginals to the uniform distributions.
 That means starting with the highest entropy possible and with a very low data fitting.
 
 Another solution would be to initialize the marginals with the empirical marginals.
@@ -790,10 +796,10 @@ This is in contrast with the Structured SVM setting where the optimal probabilit
 They lie on borders of the simplex.
 The uniform marginals is central to the simplex.
 It is also the probability given by the weight vector zero : $\mu_{\textrm{uniform}} = p(. |x ; w=0)$.
-The weight vector zero is also a sensitive initialization when one look at the primal problem.
+The weight vector zero is also a sensible initialization when one look at the primal problem.
 
 Note that the computation of $w^{(0)}$ can usually be done very efficiently for a uniform marginal.
-It does not suffer a $O(n\ d\ \mathcal U)$ complexity.
+It does not suffer a $O(n d \mathcal U)$ complexity.
 For the empirical marginals, it is even simpler: $w^{(0)}=0$.
 
 \paragraph{Line Search:} 
@@ -845,9 +851,9 @@ We write $\mathcal U_i = \sum_c |\Y_c|$. The complexity of the other parts of th
 
 We implemented everything in Python with Numpy.
 The oracles that we need are the sum-product algorithm and the max-product algorithm on a chain.
-They both are dynamic programming algorithm that can be coded in relatively few lines.
+They both are dynamic programming algorithm that can be implemented in relatively few lines.
 
-There two complicated objects in the algorithm \ref{sdca for crf} : the marginals and the features.
+There are two complicated objects in the algorithm \ref{sdca for crf} : the marginals and the features.
 We implement both of them as classes, so that applying SDCA on a  new dataset with a sequential structure will just require to implement these classes again.
 
 The algorithm is not working yet.
@@ -855,8 +861,8 @@ There is most likely a bug.
 We provide preliminary results to show what works and what does not, and more importantly to give some insights about the algorithm itself. 
 For the reference, we include the figure \ref{schmidt's curves} drawn from \cite{schmidt_non-uniform_2015}.
 In this figure, a number of methods are compared on the OCR dataset.
-The best one is SAG-NUS* : stochastic average gradient with a mixed uniform -- non-uniform sampling scheme.
-SAG-NUS* reaches a sub-optimality $10^{-4}$ on the primal in about 100 iterations.
+The best one is SAG-NUS* : stochastic average gradient with a line search and a mixed uniform -- non-uniform sampling scheme.
+SAG-NUS* reaches a sub-optimality of $10^{-4}$ on the primal in about a 100 iterations.
 
 \begin{figure}[ht]
 	\label{schmidt's curves}
@@ -868,7 +874,7 @@ SAG-NUS* reaches a sub-optimality $10^{-4}$ on the primal in about 100 iteration
 
 Figure \ref{training crf} shows the evolution of the duality gap on a subset  of  the OCR dataset  of size $n=626$, for different values of $\lambda$.
 When $\lambda=1$ (very large), the duality gap decreases very fast towards $10^{-2.5}$, at which it stops.
-When $\lambda$ gets to smaller, more reasonable values, the algorithm gradually stop converging before increasing the duality gap.
+When $\lambda$ gets to smaller, more reasonable values, the algorithm gradually stop converging, and even worse, it starts increasing the duality gap.
 
 \begin{figure}[ht]
     \centering
@@ -895,27 +901,28 @@ In figure \ref{ocr annexes}, we look at the evolution of some variables to get s
 On the top, there is the norm of the primal descent direction.
 Second is the inner product between the weight vector and the primal descent direction.
 A negative inner product is a good thing since we want to minimize the norm of the weight vector.
-This especially true at the beginning because we initialize SDCA with the uniform distribution.
+This is especially true at the beginning because we initialize SDCA with the uniform distribution.
 From there the entropy can only decrease to let the weight norm decrease as well.
 The plots show that indeed the inner product is mostly negative before oscillating around the zero line. 
 These two first variables are used in the definition of the line search.
 Both of them should converge towards zero.
 The norm of the ascent direction does not for small values of $\lambda$.
 
-The third line of plots represent the evolution of the step sizes.
+The third line of plots represent the evolution of the step size.
 In every instance, they tend to be high and close to 1 at the beginning.
 After a few pass, they tend to be mostly zero.
 In total, about 70\% of the samples we pick are useless (step size = 0).
 
 The fourth line is the evolution of the dual score.
 This is the score that we are directly optimizing in SDCA.
-It increases as we expect.
-If not for the duality gap, it looks converging.
+It increases as we expect, and it looks converging.
+Yet for the two small values of $\lambda$, it remains negative.
+It performs worse than the empirical distribution (score equal zero).
 
 Finally the fifth line is the estimate of the duality gap that we get by taking the mean of the (stale) individual duality gaps.
 We observe a jump after each epoch.
 That corresponds to the full batch computation of the duality gap, resetting the estimate to its true value.
-If the algorithm was running normally, we would do that operation only every T epochs.
+If the algorithm was running normally, we would do that operation only every five or ten epochs.
 
 \begin{figure}[ht]
     \centering
@@ -984,7 +991,7 @@ If the algorithm was running normally, we would do that operation only every T e
 SDCA is applicable to train CRF models. 
 We still lack experimental evidences of its efficiency.
 Chances are that there exist a domain for which SDCA is more efficient than SAG, as illustrated by the complexity analysis.
-This project is still going at the MILA.
+This project is still going on at the MILA.
 
 
 \bibliographystyle{plain}
