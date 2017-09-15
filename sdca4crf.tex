@@ -464,7 +464,7 @@ See algorithm \ref{sdca for logreg} for details.
 
 
 \begin{algorithm}[ht]
-    \caption{SDCA for Single Node Models}%
+    \caption{SDCA for Logistic Regression}%
     \label{sdca for logreg}
 \begin{algorithmic}
         %
@@ -553,7 +553,7 @@ Their idea is to sample \textit{almost} proportionally to the norm of the dual a
 The formula applied to the logistic regession can be written:
 \begin{equation}
 	\label{csiba}
-	p_i \propto \| \beta_i - \alpha_i \l \sqrt{R_i^2 + 2 \lambda n} 
+	p_i \propto \| \beta_i - \alpha_i \| \sqrt{R_i^2 + 2 \lambda n} 
 \end{equation}
 where $\beta_i$ and $\alpha_i$ are as in algorithm \ref{sdca for logreg}. 
 $R_i$ is the spectral norm of $A_i$.
@@ -747,7 +747,7 @@ Equation \ref{joint from marginals} allows us to translate the entropy and the K
 \paragraph{Dual Objective.}
 With equations \ref{marginals to primal} and \ref{marginals entropy} we can express the dual problem as a maximization over the marginals.
 \begin{equation}
-	\max_{\forall i \forall c, \mu_{i, c} \in \Delta_{|c|} } - \frac{\lambda}{2} \| \mathcal W(\mu)\|^2 + \frac{1}{n} \sum_i \mathcal H _ i(\mu)
+	\max_{\forall i \forall c, \mu_{i, c} \in \Delta_{|c|} } - \frac{\lambda}{2} \| \mathcal W(\mu)\|^2 + \frac{1}{n} \sum_i \mathcal H _ i(\mu_i)
 \end{equation}
 Equation \ref{marginals divergence} even allow us to compute duality gaps.
 When we replace the joint $\alpha_i$ with the marginal $\mu_i$, we go from a size $|\Y_i|$, to a size $\mathcal U_i := \sum_{c \in \mathcal C_i} |\Y_c|$.
