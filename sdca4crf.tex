@@ -847,11 +847,17 @@ We write $\mathcal U_i = \sum_c |\Y_c|$. The complexity of the other parts of th
 	\item Function estimation in the Line Search $O(\mathcal U_i)$
 \end{itemize}
 
+In terms of memory, SDCA has the same complexity as SAG. 
+Both methods need to store the marginals.
+For a general pairwise graphical model with V vertices, E edges, and K class per nodes, this is a total complexity of $O(n(VK + EK^2))$.
+
 \subsection{Results on OCR}
 
+We implemented the SDCA method as well as all the subroutines to train a CRF on the OCR dataset.
 We implemented everything in Python with Numpy.
 The oracles that we need are the sum-product algorithm and the max-product algorithm on a chain.
 They both are dynamic programming algorithm that can be implemented in relatively few lines.
+The features we used are described in appendix I.1 of \cite{osokin_minding_2016}.
 
 There are two complicated objects in the algorithm \ref{sdca for crf} : the marginals and the features.
 We implement both of them as classes, so that applying SDCA on a  new dataset with a sequential structure will just require to implement these classes again.
