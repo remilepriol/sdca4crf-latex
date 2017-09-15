@@ -198,8 +198,9 @@ Standard approach to train CRF: Maximum Likelihood
 \begin{frame}
 \frametitle{Reformulation}
 
+New notations:
 \begin{align*}
-	&\textrm{Corrected features:} & \psi_i(y)) := F(x_i, y_i) - F(x_i, y) \in \R^d \\
+	&\textrm{Corrected features:} & \psi_i(y) := F(x_i, y_i) - F(x_i, y) \in \R^d \\
 	&\textrm{Corrected feature matrix:} & A_i := ( \psi_i(1),\psi_i(2),...,\psi_i(|\Y_i|) ) \in \R^{d\times |\Y_i|} \\
 	&\textrm{Log-sum-exp function:} & \phi_i(z) = \log \big(\sum_{y\in \Y_i} \exp(z_y)\big)
 \end{align*}
@@ -229,43 +230,50 @@ The log-likelihood becomes :
 	\begin{itemize}
 		\item Exponentiated Gradient by Collins in 2008 \footcite{collins_exponentiated_2008}
 		\item Non-Uniform Sampling -- Stochastic Average Gradient (NUS-SAG) by Schmidt in 2014 \footcite{schmidt_non-uniform_2015}
+		\item SDCA \footcite{shalev-shwartz_accelerated_2013-1}
 	\end{itemize}
 
-\visible<2->{
+
 \begin{center}
-	\textbf{Variance reduced methods for training CRF}
+	\visible<2->{Variance reduced methods.\\}
+	\bigskip
+	\visible<3->{Why SDCA?\\}
+	\bigskip
+	\visible<4->{\textbf{Exact line search for cheap!}}
 \end{center}
-}
+
+
+
 
 \end{frame}
 %----------------------------------------------------------------------------------------
-\begin{frame}
-\frametitle{Why SDCA?}
-\begin{center}
-$L =$ smoothness of $\mathcal P$, 
-$m =$ strong convexity of $\mathcal P$, 
-$\lambda \leq m \leq L$\\
-\bigskip
-\begin{tabular}{clclc}
-Algorithm & Convergence rate & Guarantee \\
-\hline
-Online EG & $O((n + \frac{L}{\lambda})\log(1/\epsilon))$ & (dual)\\
-SAG & $O((n + \frac{L}{m})\log(1/\epsilon))$ & (primal) \\
-SDCA & $O( (n + \min( \frac{L}{\lambda}, \sqrt{\frac{n L}{\lambda}}) ) \log(1/\epsilon) )$ & (duality gap)
-\end{tabular}
-
-\bigskip
-
-\visible<2->{Not a better rate, but...}
-
-\bigskip
-
-\visible<3->{\textbf{Exact line search for cheap!}}
-
-\end{center}
-
-
-\end{frame}
+%\begin{frame}
+%\frametitle{Why SDCA?}
+%\begin{center}
+%$L =$ smoothness of $\mathcal P$, 
+%$m =$ strong convexity of $\mathcal P$, 
+%$\lambda \leq m \leq L$\\
+%\bigskip
+%\begin{tabular}{clclc}
+%Algorithm & Convergence rate & Guarantee \\
+%\hline
+%Online EG & $O((n + \frac{L}{\lambda})\log(1/\epsilon))$ & (dual)\\
+%SAG & $O((n + \frac{L}{m})\log(1/\epsilon))$ & (primal) \\
+%SDCA & $O( (n + \min( \frac{L}{\lambda}, \sqrt{\frac{n L}{\lambda}}) ) \log(1/\epsilon) )$ & (duality gap)
+%\end{tabular}
+%
+%\bigskip
+%
+%\visible<2->{Not a better rate, but...}
+%
+%\bigskip
+%
+%\visible<3->{\textbf{Exact line search for cheap!}}
+%
+%\end{center}
+%
+%
+%\end{frame}
 %----------------------------------------------------------------------------------------
 \section{SDCA for Max-likelihood}
 %----------------------------------------------------------------------------------------
@@ -415,15 +423,16 @@ Dual weights
 \begin{frame}
 	\frametitle{Idea}
 	
+	\begin{block}{Our Scheme}
 	\begin{itemize}
 		\item At each step, update individual duality gap $ g_i = D_{KL} (\alpha_i || \bm \alpha_i(\bm w(\alpha))$
 		\item Sample $i$ proportionally to $g_i$.
 	\end{itemize}
-	
 	\visible<2->{
 	Scheme adapted from Block-Coordinate Franck-Wolfe\footcite{osokin_minding_2016}.\\
 	Transposable to the exponentiated gradient.
 	}
+	\end{block}
 	
 	\visible<3->{
 	\begin{block}{Competing scheme}
