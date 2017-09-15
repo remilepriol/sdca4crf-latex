@@ -80,7 +80,7 @@
 \usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
 \usepackage{subcaption}
 
-\usepackage[style=verbose, backend=biber]{biblatex}
+\usepackage[backend=biber, style=reading]{biblatex}
 \addbibresource{optimization.bib}
 
 \usepackage{amsmath}
@@ -223,6 +223,11 @@ The log-likelihood becomes :
 	\min_{w\in\R^d}  \mathscr P(w) = \frac{\lambda}{2}\|w\|^2 + \frac{1}{n}   \sum_{i=1}^{n} \phi_i(-A_i^Tw)
 \end{equation}
 
+\begin{center}
+	\visible<2->{HARD ! $A_i$ is huge.} 
+\end{center}
+
+
 \end{frame}
 %----------------------------------------------------------------------------------------
 \begin{frame}[fragile]
@@ -230,16 +235,16 @@ The log-likelihood becomes :
 	\begin{itemize}
 		\item Exponentiated Gradient by Collins in 2008 \footcite{collins_exponentiated_2008}
 		\item Non-Uniform Sampling -- Stochastic Average Gradient (NUS-SAG) by Schmidt in 2014 \footcite{schmidt_non-uniform_2015}
-		\item SDCA \footcite{shalev-shwartz_accelerated_2013-1}
+		\item<2-> SDCA \footcite{shalev-shwartz_accelerated_2013-1}
 	\end{itemize}
 
 
 \begin{center}
-	\visible<2->{Variance reduced methods.\\}
+	\visible<3->{Variance reduced methods.\\}
 	\bigskip
-	\visible<3->{Why SDCA?\\}
+	\visible<4->{Why SDCA?\\}
 	\bigskip
-	\visible<4->{\textbf{Exact line search for cheap!}}
+	\visible<5->{\textbf{Exact line search for cheap!}}
 \end{center}
 
 
@@ -324,7 +329,7 @@ $H_i$ is the entropy over $\Delta_i$.
 \begin{frame}
 \frametitle{Conjugate variables}
 
-Primal probabilities:
+Primal probabilities
 \begin{equation*}
 	\label{primal to dual}
 	\forall i, \bm \alpha_i(w) := \nabla\phi_i(-A_i^Tw) = p(.|x_i; w) \propto \exp(-w^T \psi_i(.))
@@ -338,11 +343,13 @@ Dual weights
 	& =\frac{1}{\lambda n} \sum_i F(x_i, y_i) - \frac{1}{\lambda n} \sum_i \E_{y \sim \alpha_i} [F(x_i, y)]
 \end{align*}
 
+\visible<2->{
 \begin{block}{Optimality condition}
 	\begin{equation*}
 		\alpha^* = \bm \alpha(w^*) \quad \textrm{and} \quad w^* = \bm w(\alpha^*)
 	\end{equation*}
 \end{block}
+}
 
 \end{frame}
 %----------------------------------------------------------------------------------------
@@ -352,13 +359,17 @@ Dual weights
 \begin{equation*}
 	\max_{\alpha | \forall i, \alpha_i \in \Delta_i} \mathscr{D}(\alpha) = \underbrace{-\frac{\lambda}{2} \| \bm w(\alpha) \|^2}_\text{data fitting} + \underbrace{ \frac{1}{n} \sum_{i=1}^n H_i(\alpha_i)}_\text{regularization}
 \end{equation*}
+
+\begin{center}
+	\visible<2->{HARD ! $\alpha$ is huge.} 
+\end{center}
 	
 \end{frame}
 %----------------------------------------------------------------------------------------
 \begin{frame}
 \frametitle{Principle of SDCA\footcite{shalev-shwartz_accelerated_2013-1}}
 \begin{itemize}
-	\item Store dual probabilities $\alpha$
+	\item Store dual probabilities $\alpha$ and $\bm w(\alpha)$.
 	\item Sample $i \in \{1,\dots ,n\}$
 	\item Update $\alpha_i^+ \leftarrow (1-\gamma) \alpha_i + \gamma \bm \alpha_i(\bm w(\alpha))$ with $\gamma \in [0, 1]$
 \end{itemize}
@@ -379,7 +390,7 @@ Dual weights
         %
        \FOR{$k=0\dots K$}
                 \STATE Pick $i$ at random in $\{1,\ldots,n\}$ (optionally, proportional to $g_i$)
-                \STATE Let $ \beta_i := p( . |x ; w^{(k)})$
+                \STATE Let $ \beta_i := p( . |x ; w^{(k)}) = \bm \alpha_i(\bm w(\alpha_i^{(k)}))$ 
                 %
                 \STATE Let $g_i = D_{KL}(\alpha_i || \beta_i)$ (optional)
                 %
@@ -406,6 +417,10 @@ Dual weights
 %----------------------------------------------------------------------------------------
 \begin{frame}
 	\frametitle{On duality gaps}
+	Duality gap:
+	\begin{equation*}
+		g(w,\alpha) = \mathscr P(w) - \mathscr D(\alpha)
+	\end{equation*}
 	
 	Primal model gap:
 	\begin{equation*}
@@ -453,26 +468,29 @@ Dual weights
 %----------------------------------------------------------------------------------------
 \begin{frame}
 	\frametitle{Results 2}
+	% Covertype dataset. 7 classes in dimension 55. 
 	\includegraphics[width=\textwidth]{images/20170914_065817_covertype_perf}
-	
-	%Csiba's scheme is marginally better, but it does not scale to structured CRF
+	% Show a plot where the uniform scheme actually has access to as much data as the non-uniform ones.
+	% Csiba's scheme is marginally better, but it does not scale to structured CRF
 \end{frame}
 %----------------------------------------------------------------------------------------
 %----------------------------------------------------------------------------------------
-\section{Exploit the Structure}
+\section{Leverage the Structure}
 %----------------------------------------------------------------------------------------
 \begin{frame}
 	\frametitle{Overview}
 	\tableofcontents[currentsection]  
 \end{frame}
 %----------------------------------------------------------------------------------------
-\begin{frame}
-	\frametitle{Joints and Marginals}
+\begin{frame}[fragile]
+	\frametitle{Joints and Marginals \footcite{taskar_max-margin_2004} }
+	
 	Marginal probability on the clique $c \in \mathcal C$.
 	\begin{equation*}
 	\label{marginals definition}
 	\mu_{i, c}(y_c) := \sum_{y'\in \Y_i | y_c' = y_{i, c}} \alpha_i(y')
 	\end{equation*}
+	The marginals of the sample i live in the local consistency polytope $L_i$.
 	
 	If $\mathcal T = (\mathcal C, \mathcal S)$ is a junction tree of $G$:
 	\begin{equation}
@@ -484,8 +502,6 @@ Dual weights
 		We can compute $p_c(y_c | x_i ; w) = \mu_{i,c}'(y_c)$.
 	\end{center}
 
-	
-	
 \end{frame}
 %----------------------------------------------------------------------------------------
 \begin{frame}
@@ -527,7 +543,7 @@ Dual weights
 	\frametitle{A New Dual Objective}
 	
 	\begin{equation}
-	\max_{\forall i \forall c, \mu_{i, c} \in \Delta_{|c|} } - \frac{\lambda}{2} \| \mathcal W(\mu)\|^2 + \frac{1}{n} \sum_i \mathcal H _ i(\mu_i)
+	\max_{\forall i, \mu_i \in \mathcal L_i} - \frac{\lambda}{2} \| \mathcal W(\mu)\|^2 + \frac{1}{n} \sum_i \mathcal H _ i(\mu_i)
 	\end{equation}
 	
 	\begin{center}
@@ -602,9 +618,9 @@ Dual weights
 \end{frame}
 %----------------------------------------------------------------------------------------
 %----------------------------------------------------------------------------------------
-\begin{frame}
-	\printbibliography
-\end{frame}
+%\begin{frame}
+%	\printbibliography
+%\end{frame}
 %----------------------------------------------------------------------------------------
 %----------------------------------------------------------------------------------------
 \appendix
