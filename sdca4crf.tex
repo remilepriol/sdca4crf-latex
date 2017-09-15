@@ -124,12 +124,8 @@ Both operates in the dual, but SDCA's linear convergence rate is  guaranteed on 
 This is theoretically stronger than the exponentiated gradient.
 That makes SDCA closer from SAG in terms of theoretical guarantee.
 
-The strong theoretical advantage of SDCA is its line search.
-We can perform an exact line search for a very limited cost.
-This is in contrast with SAG and the exponentiated gradient where the line search is very expensive.
-
 \paragraph{Non-Uniform Sampling}
-Schmidt improved SAG with a non-uniform sampling scheme.
+Schmidt improved SAG with a non-uniform sampling scheme (NUS-SAG).
 A variety of non-uniform sampling schemes have been proposed for SDCA, such as \cite{csiba_stochastic_2015} which applies to binary classification.
 We propose a new approach inspired by \cite{osokin_minding_2016} to improve the Block Coordinate Franck Wolfe algorithm from \cite{lacoste-julien_block-coordinate_2012}.
 We sample proportionally to estimates of individual duality gaps.
@@ -156,8 +152,14 @@ It means that SAG is adaptative to  hidden strong-convexity, but not SDCA.
 For large values of $\lambda$, the problem is very-strongly convex, and rather well  conditioned $L/m \leq L/\lambda \leq n$.
 Then SAG has the best convergence rate.
 On the other hand, if $\lambda$ is very small, SDCA may outperform SAG.
-In between these extremes lies the typical value $\lambda=1/n$.
-For such a value, if $m$ is close to $\lambda$, the outcome is uncertain.
+In between these extremes lies the typical value $\lambda=1/n$, for which SAG has a better convergence rate $L/m \leq L/\lambda $.
+SDCA has a strong theoretical advantage though.
+It is its line search.
+We can perform an exact line search for a small cost.
+This is in contrast with SAG and the exponentiated gradient where the line search is very expensive.
+That exact line search is not directly embodied in the convergence rate.
+That is why we expect SDCA to have performance at least comparable to NUS-SAG.
+ 
 
 \section{Multinomial Logistic Regression}
 
@@ -519,7 +521,7 @@ This can be done with a stabilized Newton method for instance, as described in t
 We have to be cautious in the manipulation of the entropy and its derivatives.
 Marginals are supposed to remain in the interior of the simplex, as a result of the softmax.
 Yet they sometimes get awfully close from zero.
-To stabilize this, we replace the marginals inside the logorithms and in the denominator by $\max(10^{-16}, \textrm{marginals})$.
+To stabilize this, we replace the marginals inside the logarithms and in the denominator by $\max(10^{-16}, \textrm{marginals})$.
 
 
 \paragraph{Certificate.}
@@ -544,18 +546,18 @@ This mixed-scheme avoids a redundant pass over the data, which is not necessary 
 In SDCA, if we pick the element i, we have access to the duality gap $g_i$ for the cost $O(K)$ of computing a KL-divergence.
 We can update the sampling probability.
 We also have to do a batch update periodically to get a certificate of convergence.
-This is the opportunity to update the full table of individua duality gaps.
+This is the opportunity to update the full table of individual duality gaps.
 
 Another adaptive sampling scheme has been proposed by Csiba et al.  in \cite{csiba_stochastic_2015} to train a binary classifier with SDCA.
 This method can easily be generalized to the multi-class setting.
 Their idea is to sample \textit{almost} proportionally to the norm of the dual ascent direction.
 \textit{Almost}, because they use a correction term accounting for the different characteristics of each sample.
-The formula applied to the logistic regession can be written:
+Their scheme applied to the logistic regression can be written:
 \begin{equation}
 	\label{csiba}
 	p_i \propto \| \beta_i - \alpha_i \| \sqrt{R_i^2 + 2 \lambda n} 
 \end{equation}
-where $\beta_i$ and $\alpha_i$ are as in algorithm \ref{sdca for logreg}. 
+where $\beta_i = \bm \alpha_i(\bm w(\alpha_i)$ are as in algorithm \ref{sdca for logreg}. 
 $R_i$ is the spectral norm of $A_i$.
 We approximate it with the lower bound : $\max_y \| \psi_i(y)\|$, which is easier to compute.
 We compare our duality gap sampling scheme to this adaptation of Csiba's sampling scheme.
