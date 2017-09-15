@@ -124,6 +124,10 @@ Both operates in the dual, but SDCA's linear convergence rate is  guaranteed on 
 This is theoretically stronger than the exponentiated gradient.
 That makes SDCA closer from SAG in terms of theoretical guarantee.
 
+The strong theoretical advantage of SDCA is its line search.
+We can perform an exact line search for a very limited cost.
+This is in contrast with SAG and the exponentiated gradient where the line search is very expensive.
+
 \paragraph{Non-Uniform Sampling}
 Schmidt improved SAG with a non-uniform sampling scheme.
 A variety of non-uniform sampling schemes have been proposed for SDCA, such as \cite{csiba_stochastic_2015} which applies to binary classification.
@@ -140,7 +144,7 @@ We have $\lambda \leq m \leq L$.
 We call $\sigma^2$ a bound on the variance of the gradients.\\
 \begin{center}
 \begin{tabular}{llc}
-Deterministic: & $O(n\sqrt{\frac{L}{m}}\log(1/\epsilon))$ & (primal)\\
+Deterministic & $O(n\sqrt{\frac{L}{m}}\log(1/\epsilon))$ & (primal)\\
 Online EG & $O((n + \frac{L}{\lambda})\log(1/\epsilon))$ & (dual)\\
 Stochastic & $O(\frac{\sigma^2}{m \epsilon}+\sqrt{\frac{L}{m \epsilon}})$ & (primal)\\
 SAG & $O((n + \frac{L}{m})\log(1/\epsilon))$ & (primal) \\
@@ -150,10 +154,10 @@ SDCA & $O( (n + \min( \frac{L}{\lambda}, \sqrt{\frac{n L}{\lambda}}) ) \log(1/\e
 Compared to SAG, SDCA suffer a dependency on the regularization parameter $\lambda$ instead of $m$.
 It means that SAG is adaptative to  hidden strong-convexity, but not SDCA.
 For large values of $\lambda$, the problem is very-strongly convex, and rather well  conditioned $L/m \leq L/\lambda \leq n$.
-Then we expect SDCA to behave worse than SAG.
-On the other hand, if $\lambda$ is small and the problem is ill conditioned, SDCA may outperform SAG.
+Then SAG has the best convergence rate.
+On the other hand, if $\lambda$ is very small, SDCA may outperform SAG.
 In between these extremes lies the typical value $\lambda=1/n$.
-For such a value, if $m$ is not much smaller than $\lambda$, both algorithms should be comparable.
+For such a value, if $m$ is close to $\lambda$, the outcome is uncertain.
 
 \section{Multinomial Logistic Regression}
 
