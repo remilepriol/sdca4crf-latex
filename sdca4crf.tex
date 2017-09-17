@@ -300,7 +300,7 @@ We write $R(w) :=  \frac{\lambda}{2}\|w\|^2$ the convex regularization function.
 We note $R^*$ and $\phi_i^*$ the convex conjugates (aka Fenchel dual functions) of $R$ and $\phi_i$ respectively.
 The Fenchel dual associated to this problem is derived as follows :
 \begin{align*}
-	 \min_w \ R(w) + \frac{1}{n} \sum_i \phi_i(- A_i^T w) & = \min_w \ \max_{z\in \dom g^*}  \  z^Tw - R^*(z) + \frac{1}{n} \sum_i \max_{\alpha_i \in \dom \phi_i^*} \alpha_i^T (-A_i^T w) - \phi_i^*(\alpha_i) \\
+	 \min_w \ R(w) + \frac{1}{n} \sum_i \phi_i(- A_i^T w) & = \min_w \ \max_{z\in \dom R^*}  \  z^Tw - R^*(z) + \frac{1}{n} \sum_i \max_{\alpha_i \in \dom \phi_i^*} \alpha_i^T (-A_i^T w) - \phi_i^*(\alpha_i) \\
 	 	& \geq \max_{z, \alpha} \  \min_w \  w^T(z - \frac{1}{n} \sum_i A_i \alpha_i) - R^*(z) - \frac{1}{n} \sum_i \phi_i^*(\alpha_i) \\
 		& =  \max_{\alpha} \   - R^*(\frac{1}{n} \sum_i A_i \alpha_i) + \frac{1}{n} \sum_i -\phi_i^*(\alpha_i) \quad \textrm{if} \quad z= \frac{1}{n} \sum_i A_i \alpha_i \quad , -\infty \textrm{ otherwise.}\\
 \end{align*}
@@ -326,9 +326,9 @@ This is true by the Fenchel Duality theorem because the $l^2$ regularization is 
 The primal problem is strongly convex, so there is only one minimum.
 Similarly, the dual problem is strongly concave, so there is only one maximum.
 We consider the global optimum $(w^*,z^*,\alpha^*)$.
-$(w^*,z^*)$ should be dual variables for the convex conjugates $(g, g^*)$.
+$(w^*,z^*)$ should be dual variables for the convex conjugates $(R, R^*)$.
 \begin{equation*}
-	g(w^*) + g^*(z^*) - \langle w^*, z^* \rangle = \frac{\lambda}{2} \| w^* - \frac{1}{\lambda} z^* \|^2 = 0
+	R(w^*) + R^*(z^*) - \langle w^*, z^* \rangle = \frac{\lambda}{2} \| w^* - \frac{1}{\lambda} z^* \|^2 = 0
 \end{equation*}
 Hence the optimality condition:
 \begin{equation*}
@@ -387,9 +387,11 @@ The optimization can be seen as a back and forth between the primal variable and
 \subsection{Duality Gaps}
 
 The duality gap $g(w,\alpha)$ is the difference between the value  of the primal problem evaluated in $w$, and the value of the dual problem evaluated in $\alpha$.
-\begin{equation*}
-	g(w,\alpha) := \mathscr P(w) - \mathscr D(\alpha)
-\end{equation*}
+\begin{align*}
+	g(w,\alpha) 
+	& := \mathscr P(w) - \mathscr D(\alpha) \\
+	& = \frac{\lambda}{2}( \|w\|^2 + \|\bm w(\alpha) \|^2) + \sum_i \phi_i(-A_i^Tw) - H_i(\alpha_i)
+\end{align*}
 It is interesting to look at the duality gap for both the primal model and the dual model, i.e. the duality gap between the primal weights and the primal probability, and the duality gap between the dual weights and the dual probability.
 
 \paragraph{Primal model:}
