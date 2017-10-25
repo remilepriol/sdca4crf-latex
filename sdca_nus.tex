@@ -1,0 +1,94 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+
+\usepackage[sorting=ynt, style=numeric]{biblatex}
+\bibliography{references.bib}
+
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage[section]{placeins}
+\usepackage{fullpage}
+\usepackage[affil-it]{authblk}
+\usepackage{todonotes}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bbold}
+\usepackage{mathrsfs}
+\usepackage{bm}
+
+\usepackage{algorithm}
+\usepackage[noend]{algorithmic} 
+
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\cst}{cst}
+\DeclareMathOperator{\Gram}{Gram}
+\DeclareMathOperator{\R}{\mathbb{R}}
+\DeclareMathOperator{\1}{\mathbb{1}}
+\DeclareMathOperator{\E}{\mathbf{E}}
+\DeclareMathOperator{\Y}{\mathcal{Y}}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator{\dom}{Dom}
+
+\title{Non-Uniform Sampling for \\ Stochastic Dual Coordinate Ascent}
+\author{R\'emi LE PRIOL}
+\affil{Montreal Institute of Learning Algorithms}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+Non-uniform sampling has been applied to a number fo algorithms to improve their convergence rate. 
+They are usually non-adaptive, and transform a dependency in the max of some variables (eg the Lipschitz constant of the gradient of the loss) into  the mean of these variables.
+That's the case for SAGA \cite{schmidt2015non}, or SDCA\cite{richtarik}.
+
+Recently some adaptive strategy were proposed, such as \cite{csiba2015stochastic} for SDCA or \cite{osokin2016minding} for BCFW.
+\cite{csiba2015stochastic} 's approach was the first adaptive scheme ever proposed and analyzed (at least for sdca), but the analysis gives fairly unpractical results.
+Yet it performs well empirically.
+Their idea is to sample proportionally to some form of suboptimality, times some Lipschitz factor.
+\cite{osokin2016minding} 's strategy is to sample proportionally to the duality gaps of each individual variable. 
+As soon as the individual duality gaps are non-uniform enough, they perform significantly better than the uniform scheme.
+Their analysis holds only for the sub-linear convergence rate of the classical BCFW though. 
+
+We propose two new sampling scheme for SDCA, and derive according bounds on the convergence rate by mixing ideas from both papers cited above. 
+The first scheme samples proportionally to the duality gaps of each individual  variable, so as to spend more time on the worst point so far.
+The second scheme is similar to the first one, but it corrects the duality gaps with the Lipschitz constant of the primal problem, so as to spend more time on the points harder to classify.
+
+\section{Theorems}
+
+Denote $h_t = D(\alpha^*) - D(\alpha^{(t)}$ the dual sub-optimality at step t. We can get almost the same bound for the duality gap.
+
+\paragraph{Theorem 1:} Uniform sampling \cite{shalev-shwartz_accelerated_2013-1}. 
+Linear convergence bound with a dependency on the max of the Lipschitz constant.
+\begin{equation}
+	h_t \leq (1-\frac{s}{n})^t  h_0
+\end{equation}
+where $ s = \frac{n}{n+R^2/(\lambda \gamma)} $ is the fixed step-size used in the proof. We want the linear coefficient $\frac{s}{n}$ to be as large as possible. R is an upper bound on the adequate operator norm of the features matrix. For log-likelihood, $R = \max_{i,y} \| \psi_i(y) \|_2^2 $ is the squared radius of the features. $R/\gamma$ is the smoothness constant of the primal loss.
+
+\paragraph{Theorem 2:} Importance Sampling \cite{richtarik}. 
+Improved linear convergence bound thanks to larger step sizes. The dependency is now on the mean of the Lipschitz constant.
+
+\paragraph{Theorem 3:} Should I put Csiba or not? It's quite complicated to explain.
+
+\paragraph{Theorem 4:} gap sampling (this paper). 
+I have a similar improvement as in \cite{osokin2016minding} but with a simpler constant and in the linear coefficient. 
+\begin{equation}
+	h_t \leq (1-\frac{s \theta^2}{n})^t  h_0
+\end{equation}
+where $\theta \in [1,\sqrt n] $ is a lower bound on the non-uniformity of the duality gaps.  For a uniform variable, $\theta = 2 / \sqrt 3 $.
+
+\paragraph{Theorem 5:} gap-lip sampling (this paper).
+I get back the dependency on the mean of the Lipschitz constants, but I lose a bit of the advantage I gained with the gap-sampling.
+\begin{equation}
+	h_t \leq (1-\frac{\bar s \theta}{n})^t  h_0
+\end{equation}
+
+
+\printbibliography
+
+\end{document}
